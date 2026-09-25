@@ -1,0 +1,114 @@
+DEBUG:asyncio:Using selector: KqueueSelector
+INFO:flet:Assets path configured: /Users/andreatlas/Projetos_pessoais/Ponto_Residencia/desktop_app/assets
+DEBUG:flet:Creating new PubSubHub instance
+DEBUG:flet:Creating new PubSubHub instance
+INFO:flet:Starting up UDS server on /var/folders/d3/tgdrvz691fd35gvs4js90zmw0000gn/T/xBRSuouoO9
+INFO:flet:Flet app has started...
+INFO:flet:App URL: /var/folders/d3/tgdrvz691fd35gvs4js90zmw0000gn/T/xBRSuouoO9
+INFO:flet_desktop:Starting Flet View app...
+INFO:flet_desktop:Flet View found in: /Users/andreatlas/.flet/bin/flet-0.28.3
+DEBUG:flet:Connected new TCP client
+DEBUG:flet:_on_message: {"action":"registerWebClient","payload":{"pageName":"var/folders","pageRoute":"/","pageWidth":"800.0","pageHeight":"600.0","windowWidth":"800.0","windowHeight":"628.0","windowTop":"189.0","windowLeft":"356.0","isPWA":"false","isWeb":"false","isDebug":"false","platform":"macos","platformBrightness":"light","media":"{\"padding\":{\"top\":0.0,\"right\":0.0,\"bottom\":0.0,\"left\":0.0},\"view_padding\":{\"top\":0.0,\"right\":0.0,\"bottom\":0.0,\"left\":0.0},\"view_insets\":{\"top\":0.0,\"right\":0.0,\"bottom\":0.0,\"left\":0.0}}","sessionId":""}}
+DEBUG:flet:__send: {"action":"registerWebClient","payload":{"session":{"id":"","controls":{"page":{"i":"page","t":"page","p":"","c":[],"route":"/","width":"800.0","height":"600.0","windowwidth":"800.0","windowheight":"628.0","windowtop":"189.0","windowleft":"356.0","pwa":"false","web":"false","debug":"false","platform":"macos","platformBrightness":"light","media":"{\"padding\":{\"top\":0.0,\"right\":0.0,\"bottom\":0.0,\"left\":0.0},\"view_padding\":{\"top\":0.0,\"right\":0.0,\"bottom\":0.0,\"left\":0.0},\"view_insets\":{\"top\":0.0,\"right\":0.0,\"bottom\":0.0,\"left\":0.0}}"}}},"error":"","appInactive":false}}
+DEBUG:flet:_process_command: get ['page', 'route'] {}
+DEBUG:flet:_process_command: get ['page', 'pwa'] {}
+DEBUG:flet:_process_command: get ['page', 'web'] {}
+DEBUG:flet:_process_command: get ['page', 'debug'] {}
+DEBUG:flet:_process_command: get ['page', 'platform'] {}
+DEBUG:flet:_process_command: get ['page', 'platformBrightness'] {}
+DEBUG:flet:_process_command: get ['page', 'media'] {}
+DEBUG:flet:_process_command: get ['page', 'width'] {}
+DEBUG:flet:_process_command: get ['page', 'height'] {}
+DEBUG:flet:_process_command: get ['page', 'windowWidth'] {}
+DEBUG:flet:_process_command: get ['page', 'windowHeight'] {}
+DEBUG:flet:_process_command: get ['page', 'windowTop'] {}
+DEBUG:flet:_process_command: get ['page', 'windowLeft'] {}
+DEBUG:flet:_process_command: get ['page', 'clientIP'] {}
+DEBUG:flet:_process_command: get ['page', 'clientUserAgent'] {}
+INFO:flet:App session started
+DEBUG:flet:_process_command: add [] {'to': 'page', 'at': '0'}
+DEBUG:flet:_process_command: add [] {'to': 'page', 'at': '1'}
+DEBUG:flet:__send: {"action":"pageControlsBatch","payload":[{"action":"addPageControls","payload":{"controls":[{"t":"view","i":"_1","p":"page","c":["_2"],"at":"0","bgcolor":"#F7F9FC","route":"/onboarding"},{"t":"container","i":"_2","p":"_1","c":["_3"],"alignment":"{\"x\":0,\"y\":0}","expand":"1"},{"t":"column","i":"_3","p":"_2","c":["_4","_6","_7","_8","_9","_12","_13","_14","_15","_16"],"alignment":"center","horizontalalignment":"center","n":"content"},{"t":"container","i":"_4","p":"_3","c":["_5"],"alignment":"{\"x\":0,\"y\":0}","borderradius":"40","gradient":"{\"colors\":[\"#F39200\",\"#D87D00\"],\"tile_mode\":\"clamp\",\"begin\":{\"x\":-1,\"y\":-1},\"end\":{\"x\":1,\"y\":1},\"type\":\"linear\"}","height":"80","margin":"{\"l\":0,\"t\":0,\"r\":0,\"b\":16}","shadow":"{\"spread_radius\":2,\"blur_radius\":16,\"color\":\"#F39200,0.3\",\"offset\":{\"x\":0,\"y\":6},\"blur_style\":\"normal\"}","width":"80"},{"t":"icon","i":"_5","p":"_4","c":[],"color":"white","n":"content","name":"person_add_alt_1","size":"40"},{"t":"text","i":"_6","p":"_3","c":[],"color":"#1E293B","size":"24","value":"Finalizar Cadastro","weight":"bold"},{"t":"text","i":"_7","p":"_3","c":[],"color":"bluegrey500","size":"14","textalign":"center","value":"Como \u00e9 seu primeiro acesso, precisamos de\nmais alguns dados da sua m\u00e1quina."},{"t":"container","i":"_8","p":"_3","c":[],"height":"24"},{"t":"dropdown","i":"_9","p":"_3","c":["_10","_11"],"autofocus":"true","bgcolor":"{\"default\":\"white\"}","bordercolor":"black,0.1","borderradius":"12","focusedbordercolor":"#00B9DE","label":"Turma ou Equipe","width":"300"},{"t":"dropdownoption","i":"_10","p":"_9","c":[],"key":"Turma 1"},{"t":"dropdownoption","i":"_11","p":"_9","c":[],"key":"Turma 2"},{"t":"container","i":"_12","p":"_3","c":[],"height":"4"},{"t":"textfield","i":"_13","p":"_3","c":[],"bgcolor":"white","bordercolor":"black,0.1","borderradius":"12","filled":"true","focusedbordercolor":"#00B9DE","label":"N\u00famero do Computador (ex: 01, 15)","width":"300"},{"t":"container","i":"_14","p":"_3","c":[],"height":"16"},{"t":"text","i":"_15","p":"_3","c":[],"color":"redaccent700","size":"13","visible":"false","weight":"w500"},{"t":"container","i":"_16","p":"_3","c":["_17"],"alignment":"{\"x\":0,\"y\":0}","borderradius":"16","gradient":"{\"colors\":[\"#00B9DE\",\"#007A93\"],\"tile_mode\":\"clamp\",\"begin\":{\"x\":-1,\"y\":0},\"end\":{\"x\":1,\"y\":0},\"type\":\"linear\"}","height":"54","ink":"true","onclick":"true","shadow":"{\"spread_radius\":1,\"blur_radius\":14,\"color\":\"#00B9DE,0.3\",\"offset\":{\"x\":0,\"y\":4},\"blur_style\":\"normal\"}","width":"300"},{"t":"text","i":"_17","p":"_16","c":[],"color":"white","n":"content","size":"15","value":"Concluir e Acessar","weight":"w600"}],"trimIDs":[]}},{"action":"addPageControls","payload":{"controls":[{"t":"offstage","i":"_18","p":"page","c":[],"at":"1"}],"trimIDs":[]}}]}
+DEBUG:flet:sent to TCP: 603
+DEBUG:flet:sent to TCP: 2870
+DEBUG:flet:_on_message: {"action":"pageEventFromWeb","payload":{"eventTarget":"page","eventName":"app_lifecycle_state_change","eventData":"show"}}
+DEBUG:flet:_on_message: {"action":"pageEventFromWeb","payload":{"eventTarget":"page","eventName":"app_lifecycle_state_change","eventData":"resume"}}
+DEBUG:flet:page.on_event_async: page app_lifecycle_state_change show
+DEBUG:flet:page.on_event_async: page app_lifecycle_state_change resume
+DEBUG:flet:Gracefully terminating Flet app...
+DEBUG:flet:_on_message: {"action":"pageEventFromWeb","payload":{"eventTarget":"_13","eventName":"focus","eventData":null}}
+DEBUG:flet:page.on_event_async: _13 focus None
+DEBUG:flet:_on_message: {"action":"pageEventFromWeb","payload":{"eventTarget":"_13","eventName":"click","eventData":null}}
+DEBUG:flet:page.on_event_async: _13 click None
+DEBUG:flet:_on_message: {"action":"pageEventFromWeb","payload":{"eventTarget":"_13","eventName":"blur","eventData":null}}
+DEBUG:flet:page.on_event_async: _13 blur None
+DEBUG:flet:_on_message: {"action":"updateControlProps","payload":{"props":[{"i":"_9","value":"Turma 2"}]}}
+DEBUG:flet:_on_message: {"action":"pageEventFromWeb","payload":{"eventTarget":"_9","eventName":"change","eventData":"Turma 2"}}
+DEBUG:flet:page.on_event_async: page change [{"i":"_9","value":"Turma 2"}]
+DEBUG:flet:page.on_event_async: _9 change Turma 2
+DEBUG:flet:_on_message: {"action":"pageEventFromWeb","payload":{"eventTarget":"_13","eventName":"focus","eventData":null}}
+DEBUG:flet:page.on_event_async: _13 focus None
+DEBUG:flet:_on_message: {"action":"pageEventFromWeb","payload":{"eventTarget":"_13","eventName":"click","eventData":null}}
+DEBUG:flet:page.on_event_async: _13 click None
+DEBUG:flet:_on_message: {"action":"updateControlProps","payload":{"props":[{"i":"_13","value":"5"}]}}
+DEBUG:flet:page.on_event_async: page change [{"i":"_13","value":"5"}]
+DEBUG:flet:_on_message: {"action":"updateControlProps","payload":{"props":[{"i":"_13","value":"55"}]}}
+DEBUG:flet:page.on_event_async: page change [{"i":"_13","value":"55"}]
+DEBUG:flet:_on_message: {"action":"pageEventFromWeb","payload":{"eventTarget":"_13","eventName":"blur","eventData":null}}
+DEBUG:flet:page.on_event_async: _13 blur None
+DEBUG:flet:_on_message: {"action":"pageEventFromWeb","payload":{"eventTarget":"_16","eventName":"click","eventData":null}}
+DEBUG:flet:page.on_event_async: _16 click None
+DEBUG:getmac:Initializing 'default_iface' method cache (platform: 'darwin')
+DEBUG:getmac:Finished initializing 'default_iface' method cache
+DEBUG:getmac:Initializing 'iface' method cache (platform: 'darwin')
+DEBUG:getmac:Finished initializing 'iface' method cache
+DEBUG:getmac:Raw MAC found: fc:b2:14:bb:ea:fb
+DEBUG:httpcore.connection:connect_tcp.started host='127.0.0.1' port=8000 local_address=None timeout=5.0 socket_options=None
+DEBUG:httpcore.connection:connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x10b14fe50>
+DEBUG:httpcore.http11:send_request_headers.started request=<Request [b'POST']>
+DEBUG:httpcore.http11:send_request_headers.complete
+DEBUG:httpcore.http11:send_request_body.started request=<Request [b'POST']>
+DEBUG:httpcore.http11:send_request_body.complete
+DEBUG:httpcore.http11:receive_response_headers.started request=<Request [b'POST']>
+DEBUG:httpcore.http11:receive_response_headers.complete return_value=(b'HTTP/1.1', 422, b'Unprocessable Entity', [(b'date', b'Fri, 25 Sep 2026 19:18:06 GMT'), (b'server', b'uvicorn'), (b'content-length', b'116'), (b'content-type', b'application/json')])
+INFO:httpx:HTTP Request: POST http://127.0.0.1:8000/api/v1/auth/onboarding "HTTP/1.1 422 Unprocessable Entity"
+DEBUG:httpcore.http11:receive_response_body.started request=<Request [b'POST']>
+DEBUG:httpcore.http11:receive_response_body.complete
+DEBUG:httpcore.http11:response_closed.started
+DEBUG:httpcore.http11:response_closed.complete
+DEBUG:httpcore.connection:close.started
+DEBUG:httpcore.connection:close.complete
+DEBUG:flet:_process_command: set ['_15'] {'value': 'Falha no registro: {"detail":[{"type":"string_type","loc":["body","oauth_token"],"msg":"Input should be a valid string","input":null}]}', 'visible': 'true'}
+DEBUG:flet:__send: {"action":"pageControlsBatch","payload":[{"action":"updateControlProps","payload":{"props":[{"i":"_15","value":"Falha no registro: {\"detail\":[{\"type\":\"string_type\",\"loc\":[\"body\",\"oauth_token\"],\"msg\":\"Input should be a valid string\",\"input\":null}]}","visible":"true"}]}}]}
+DEBUG:flet:sent to TCP: 293
+DEBUG:flet:_on_message: {"action":"pageEventFromWeb","payload":{"eventTarget":"_13","eventName":"focus","eventData":null}}
+DEBUG:flet:page.on_event_async: _13 focus None
+DEBUG:flet:_on_message: {"action":"pageEventFromWeb","payload":{"eventTarget":"_13","eventName":"click","eventData":null}}
+DEBUG:flet:page.on_event_async: _13 click None
+DEBUG:flet:_on_message: {"action":"pageEventFromWeb","payload":{"eventTarget":"_13","eventName":"blur","eventData":null}}
+DEBUG:flet:page.on_event_async: _13 blur None
+DEBUG:flet:_on_message: {"action":"pageEventFromWeb","payload":{"eventTarget":"page","eventName":"app_lifecycle_state_change","eventData":"inactive"}}
+DEBUG:flet:page.on_event_async: page app_lifecycle_state_change inactive
+DEBUG:flet:_on_message: {"action":"updateControlProps","payload":{"props":[{"i":"page","windowwidth":"800.0","windowheight":"628.0","windowtop":"189.0","windowleft":"356.0","windowminimized":"false","windowmaximized":"false","windowfocused":"false","windowfullscreen":"false"}]}}
+DEBUG:flet:_on_message: {"action":"pageEventFromWeb","payload":{"eventTarget":"page","eventName":"window_event","eventData":"blur"}}
+DEBUG:flet:page.on_event_async: page change [{"i":"page","windowwidth":"800.0","windowheight":"628.0","windowtop":"189.0","windowleft":"356.0","windowminimized":"false","windowmaximized":"false","windowfocused":"false","windowfullscreen":"false"}]
+DEBUG:flet:page.on_event_async: page window_event blur
+DEBUG:flet:_on_message: {"action":"updateControlProps","payload":{"props":[{"i":"page","windowwidth":"800.0","windowheight":"628.0","windowtop":"189.0","windowleft":"356.0","windowminimized":"false","windowmaximized":"false","windowfocused":"false","windowfullscreen":"false"}]}}
+DEBUG:flet:_on_message: {"action":"pageEventFromWeb","payload":{"eventTarget":"page","eventName":"window_event","eventData":"moved"}}
+DEBUG:flet:page.on_event_async: page change [{"i":"page","windowwidth":"800.0","windowheight":"628.0","windowtop":"189.0","windowleft":"356.0","windowminimized":"false","windowmaximized":"false","windowfocused":"false","windowfullscreen":"false"}]
+DEBUG:flet:page.on_event_async: page window_event moved
+DEBUG:flet:_on_message: {"action":"pageEventFromWeb","payload":{"eventTarget":"page","eventName":"app_lifecycle_state_change","eventData":"resume"}}
+DEBUG:flet:page.on_event_async: page app_lifecycle_state_change resume
+DEBUG:flet:_on_message: {"action":"updateControlProps","payload":{"props":[{"i":"page","windowwidth":"800.0","windowheight":"628.0","windowtop":"189.0","windowleft":"356.0","windowminimized":"false","windowmaximized":"false","windowfocused":"true","windowfullscreen":"false"}]}}
+DEBUG:flet:_on_message: {"action":"pageEventFromWeb","payload":{"eventTarget":"page","eventName":"window_event","eventData":"focus"}}
+DEBUG:flet:page.on_event_async: page change [{"i":"page","windowwidth":"800.0","windowheight":"628.0","windowtop":"189.0","windowleft":"356.0","windowminimized":"false","windowmaximized":"false","windowfocused":"true","windowfullscreen":"false"}]
+DEBUG:flet:page.on_event_async: page window_event focus
+DEBUG:flet:_on_message: {"action":"updateControlProps","payload":{"props":[{"i":"page","windowwidth":"800.0","windowheight":"628.0","windowtop":"189.0","windowleft":"356.0","windowminimized":"false","windowmaximized":"false","windowfocused":"true","windowfullscreen":"false"}]}}
+DEBUG:flet:_on_message: {"action":"pageEventFromWeb","payload":{"eventTarget":"page","eventName":"window_event","eventData":"moved"}}
+DEBUG:flet:page.on_event_async: page change [{"i":"page","windowwidth":"800.0","windowheight":"628.0","windowtop":"189.0","windowleft":"356.0","windowminimized":"false","windowmaximized":"false","windowfocused":"true","windowfullscreen":"false"}]
+DEBUG:flet:page.on_event_async: page window_event moved
+DEBUG:flet_desktop:Flet View process 7186
+DEBUG:flet:Closing connection...
+DEBUG:flet:Disconnecting all pages...
+DEBUG:flet:page.on_event_async: page disconnect 
+DEBUG:flet:Shutting down thread pool...
