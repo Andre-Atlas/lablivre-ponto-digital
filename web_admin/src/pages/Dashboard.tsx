@@ -55,7 +55,7 @@ export function Dashboard({ onLogout, isDark, toggleTheme }: { onLogout: () => v
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      await createAdmin(newAdmin.nome, newAdmin.email);
+      await createAdmin(newAdmin.nome, newAdmin.email, newAdmin.senha);
       await loadUsers();
       setShowAddAdmin(false);
       setNewAdmin({ nome: '', email: '', senha: '' });

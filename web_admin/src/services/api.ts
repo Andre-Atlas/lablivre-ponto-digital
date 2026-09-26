@@ -34,18 +34,19 @@ export const adminLogin = async (email: string, password: string): Promise<{ acc
   return res.json();
 };
 
-export const createAdmin = async (nome: string, email: string): Promise<void> => {
+export const createAdmin = async (nome: string, email: string, senha: string): Promise<void> => {
   const res = await fetch(`${API_URL}/admin/usuarios`, {
     method: 'POST',
     headers: { 
       'Content-Type': 'application/json',
       Authorization: `Bearer ${localStorage.getItem('token')}` 
     },
-    body: JSON.stringify({ nome, email })
+    body: JSON.stringify({ nome, email, senha })
   });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
-    throw new Error(data.detail || 'Failed to create admin');
+    const errorMessage = typeof data.detail === 'string' ? data.detail : (Array.isArray(data.detail) ? data.detail.map((d: any) => d.msg).join(', ') : 'Failed to create admin');
+    throw new Error(errorMessage);
   }
 };
 
