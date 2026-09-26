@@ -146,7 +146,7 @@ export function Dashboard({ onLogout, isDark, toggleTheme }: { onLogout: () => v
             </p>
           </div>
           
-          <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+          <div className="flex flex-col xl:flex-row flex-wrap items-center justify-start xl:justify-end gap-3 w-full lg:w-auto mt-4 md:mt-0">
             <div className="relative group w-full sm:w-64">
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                 <Search className="text-slate-400 dark:text-white/30 group-focus-within:text-[#D12A6A] dark:group-focus-within:text-[#D12A6A] transition-colors" size={16} />
@@ -160,10 +160,10 @@ export function Dashboard({ onLogout, isDark, toggleTheme }: { onLogout: () => v
               />
             </div>
             
-            <div className="flex gap-2 w-full sm:w-auto">
+            <div className="flex flex-wrap gap-2 w-full sm:w-auto">
               <button 
                 onClick={() => handleExport('checkins?tipo=ALUNO', 'pontos_alunos.csv')}
-                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-3 py-2.5 bg-white/50 hover:bg-white dark:bg-white/[0.03] dark:hover:bg-white/[0.08] text-slate-600 dark:text-white/70 hover:text-slate-900 dark:hover:text-white font-medium tracking-wide text-[11px] uppercase rounded-xl border border-slate-200 dark:border-white/[0.08] shadow-sm transition-all active:scale-95"
+                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-3 py-2.5 bg-white/50 hover:bg-white dark:bg-white/[0.03] dark:hover:bg-white/[0.08] text-slate-600 dark:text-white/70 hover:text-slate-900 dark:hover:text-white font-medium tracking-wide text-[11px] uppercase whitespace-nowrap rounded-xl border border-slate-200 dark:border-white/[0.08] shadow-sm transition-all active:scale-95 shrink-0"
                 title="Exportar Pontos Alunos"
               >
                 <Download size={14} />
@@ -171,7 +171,7 @@ export function Dashboard({ onLogout, isDark, toggleTheme }: { onLogout: () => v
               </button>
               <button 
                 onClick={() => handleExport('checkins?tipo=STAFF', 'pontos_staff.csv')}
-                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-3 py-2.5 bg-white/50 hover:bg-white dark:bg-white/[0.03] dark:hover:bg-white/[0.08] text-slate-600 dark:text-white/70 hover:text-slate-900 dark:hover:text-white font-medium tracking-wide text-[11px] uppercase rounded-xl border border-slate-200 dark:border-white/[0.08] shadow-sm transition-all active:scale-95"
+                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-3 py-2.5 bg-white/50 hover:bg-white dark:bg-white/[0.03] dark:hover:bg-white/[0.08] text-slate-600 dark:text-white/70 hover:text-slate-900 dark:hover:text-white font-medium tracking-wide text-[11px] uppercase whitespace-nowrap rounded-xl border border-slate-200 dark:border-white/[0.08] shadow-sm transition-all active:scale-95 shrink-0"
                 title="Exportar Pontos Staff"
               >
                 <Download size={14} />
@@ -179,7 +179,7 @@ export function Dashboard({ onLogout, isDark, toggleTheme }: { onLogout: () => v
               </button>
               <button 
                 onClick={() => handleExport('usuarios', 'usuarios_lablivre.csv')}
-                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-3 py-2.5 bg-white/50 hover:bg-white dark:bg-white/[0.03] dark:hover:bg-white/[0.08] text-slate-600 dark:text-white/70 hover:text-slate-900 dark:hover:text-white font-medium tracking-wide text-[11px] uppercase rounded-xl border border-slate-200 dark:border-white/[0.08] shadow-sm transition-all active:scale-95"
+                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-3 py-2.5 bg-white/50 hover:bg-white dark:bg-white/[0.03] dark:hover:bg-white/[0.08] text-slate-600 dark:text-white/70 hover:text-slate-900 dark:hover:text-white font-medium tracking-wide text-[11px] uppercase whitespace-nowrap rounded-xl border border-slate-200 dark:border-white/[0.08] shadow-sm transition-all active:scale-95 shrink-0"
                 title="Exportar Usuários (CSV)"
               >
                 <Download size={14} />
@@ -189,7 +189,7 @@ export function Dashboard({ onLogout, isDark, toggleTheme }: { onLogout: () => v
 
             <button 
               onClick={() => setShowAddAdmin(true)}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#D12A6A] to-[#B01E55] hover:from-[#D12A6A] hover:to-[#F39200] text-white font-medium tracking-wide text-xs rounded-xl shadow-[0_4px_14px_rgba(209,42,106,0.3)] hover:shadow-[0_6px_20px_rgba(209,42,106,0.4)] transition-all active:scale-95 border border-[#D12A6A]/50"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#D12A6A] to-[#B01E55] hover:from-[#D12A6A] hover:to-[#F39200] text-white font-medium tracking-wide text-xs whitespace-nowrap rounded-xl shadow-[0_4px_14px_rgba(209,42,106,0.3)] hover:shadow-[0_6px_20px_rgba(209,42,106,0.4)] transition-all active:scale-95 border border-[#D12A6A]/50 shrink-0"
             >
               <Plus size={16} />
               Novo Admin
