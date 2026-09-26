@@ -39,8 +39,8 @@ class User(Base):
     criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     atualizado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
-    devices: Mapped[List["Device"]] = relationship(back_populates="user")
-    checkins: Mapped[List["Checkin"]] = relationship(back_populates="user")
+    devices: Mapped[List["Device"]] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True)
+    checkins: Mapped[List["Checkin"]] = relationship(back_populates="user", cascade="all, delete-orphan", passive_deletes=True)
 
     __table_args__ = (
         Index('ix_users_tipo', 'tipo'),
@@ -60,7 +60,7 @@ class Device(Base):
     registrado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     user: Mapped["User"] = relationship(back_populates="devices")
-    checkins: Mapped[List["Checkin"]] = relationship(back_populates="device")
+    checkins: Mapped[List["Checkin"]] = relationship(back_populates="device", cascade="all, delete-orphan", passive_deletes=True)
 
 class Checkin(Base):
     __tablename__ = 'checkins'
@@ -79,7 +79,7 @@ class Checkin(Base):
 
     user: Mapped["User"] = relationship(back_populates="checkins")
     device: Mapped["Device"] = relationship(back_populates="checkins")
-    duplicatas: Mapped[List["CheckinDuplicata"]] = relationship(back_populates="checkin_original")
+    duplicatas: Mapped[List["CheckinDuplicata"]] = relationship(back_populates="checkin_original", cascade="all, delete-orphan", passive_deletes=True)
 
     __table_args__ = (
         UniqueConstraint('user_id', 'turno_referencia', name='uq_checkin_user_turno'),
