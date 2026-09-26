@@ -283,25 +283,9 @@ const confirmApprove = async () => {
                         <div className="text-slate-500 dark:text-white/40 text-xs font-light transition-colors">{user.email}</div>
                       </td>
                       <td className="px-8 py-5">
-                        {user.tipo === 'ALUNO' ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 text-indigo-700 dark:text-indigo-400 text-[10px] font-medium tracking-wider uppercase transition-colors">
-                            <GraduationCap size={12} /> ALUNO
-                          </span>
-                        ) : (user.role === 'SUPER_ADMIN' ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 text-amber-700 dark:text-amber-400 text-[10px] font-medium tracking-wider uppercase transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                            SUPER ADMIN
-                          </span>
-                        ) : (user.role === 'ADMIN' ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-blue-700 dark:text-blue-400 text-[10px] font-medium tracking-wider uppercase transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                            ADMIN
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.05] text-slate-600 dark:text-white/60 text-[10px] font-medium tracking-wider uppercase transition-colors">
-                            <Briefcase size={12} /> STAFF
-                          </span>
-                        )))}
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-slate-100 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.05] text-slate-600 dark:text-white/60 text-[10px] font-medium tracking-wider uppercase transition-colors">
+                          {user.tipo === 'ALUNO' ? 'ALUNO' : (user.role && user.role !== 'STAFF' ? user.role.replace('_', ' ') : 'STAFF')}
+                        </span>
                       </td>
                       <td className="px-8 py-5">
                         {user.admin_aprovado ? (
