@@ -1,28 +1,37 @@
+import React from 'react';
+
 export function LabLivreLogo({ className = "", isDark = true }: { className?: string, isDark?: boolean }) {
-  const textColor = isDark ? "#ffffff" : "#000000";
-  const lineColor = isDark ? "#ffffff" : "#000000";
+  const textColor = isDark ? "#ffffff" : "#221E1F";
+  const lineColor = isDark ? "#ffffff" : "#221E1F";
 
   return (
     <svg viewBox="0 0 240 100" className={className} xmlns="http://www.w3.org/2000/svg">
-      <g className="transition-colors duration-500" transform="translate(5, 5)">
-        {/* Slanted Line */}
-        <path d="M 15 25 L 22 80" stroke={lineColor} strokeWidth="3.5" strokeLinecap="round" />
-        
-        {/* Magenta Wing */}
-        <polygon points="30,35 75,15 70,65 30,75" fill="#C2185B" />
-        
-        {/* Orange Piece */}
-        <polygon points="32,74 55,85 35,95 20,85" fill="#F57C00" />
+      <defs>
+        <clipPath id="magenta-clip">
+          <path d="M 24 38 L 49 18 L 46 60 L 26 68 Z" />
+        </clipPath>
+      </defs>
 
-        {/* Cyan Piece */}
-        <polygon points="32,68 50,78 45,84 27,74" fill="#00B0FF" />
+      <g className="transition-colors duration-500" transform="translate(10, 0)">
+        {/* Stick */}
+        <line x1="14" y1="28" x2="18" y2="88" stroke={lineColor} strokeWidth="3.5" strokeLinecap="round" />
+        
+        {/* Orange Shape */}
+        <path d="M 26 68 L 45 78 L 37 89 L 27 82 Z" fill="#f59321" stroke="#f59321" strokeWidth="1.5" strokeLinejoin="round" />
+
+        {/* Magenta Shape */}
+        <path d="M 24 38 L 49 18 L 46 60 L 26 68 Z" fill="#c42673" stroke="#c42673" strokeWidth="1.5" strokeLinejoin="round" />
+
+        {/* Cyan Pill - Base */}
+        <line x1="28" y1="67" x2="38" y2="75" stroke="#12bceb" strokeWidth="6" strokeLinecap="round" />
+
+        {/* Cyan Pill - Overlap with Magenta */}
+        <line x1="28" y1="67" x2="38" y2="75" stroke="#1b73a7" strokeWidth="6" strokeLinecap="round" clipPath="url(#magenta-clip)" />
       </g>
       
-      {/* Text Lab Livre */}
-      {/* Usando path tracejado ou fonte com aparência similar ao logo */}
       <g fill={textColor} fontFamily='"Orbitron", "Space Grotesk", sans-serif' fontWeight="400" className="transition-colors duration-500">
-        <text x="100" y="48" fontSize="38" letterSpacing="0">Lab</text>
-        <text x="100" y="88" fontSize="38" letterSpacing="0">Livre</text>
+        <text x="80" y="48" fontSize="38" letterSpacing="0">Lab</text>
+        <text x="80" y="88" fontSize="38" letterSpacing="0">Livre</text>
       </g>
     </svg>
   );
