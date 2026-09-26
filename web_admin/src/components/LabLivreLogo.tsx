@@ -1,4 +1,3 @@
-import React from 'react';
 
 export function LabLivreLogo({ className = "", isDark = true }: { className?: string, isDark?: boolean }) {
   const textColor = isDark ? "#ffffff" : "#221E1F";
