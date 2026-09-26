@@ -1,29 +1,24 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   <style>
-    .stick { stroke: #221E1F; }
+    .stick { stroke: #111111; }
+    .bg { fill: #fae8eb; }
     @media (prefers-color-scheme: dark) {
       .stick { stroke: #FFFFFF; }
+      .bg { fill-opacity: 0; }
     }
   </style>
-  <defs>
-    <clipPath id="magenta-clip">
-      <path d="M 24 38 L 49 18 L 46 60 L 26 68 Z" />
-    </clipPath>
-  </defs>
+  <rect width="100%" height="100%" class="bg" rx="20" />
   <g transform="translate(19, 5)">
     <!-- Stick -->
-    <line x1="14" y1="28" x2="18" y2="88" class="stick" stroke-width="3.5" stroke-linecap="round" />
+    <line x1="20" y1="28" x2="23" y2="88" class="stick" stroke-width="5" />
     
     <!-- Orange Shape -->
-    <path d="M 26 68 L 45 78 L 37 89 L 27 82 Z" fill="#f59321" stroke="#f59321" stroke-width="1.5" stroke-linejoin="round" />
+    <path d="M 26 68 L 45 78 L 37 89 L 27 82 Z" fill="#f59321" />
 
     <!-- Magenta Shape -->
-    <path d="M 24 38 L 49 18 L 46 60 L 26 68 Z" fill="#c42673" stroke="#c42673" stroke-width="1.5" stroke-linejoin="round" />
+    <path d="M 24 38 L 49 18 L 46 60 L 26 68 Z" fill="#c42673" />
 
-    <!-- Cyan Pill - Base -->
-    <line x1="28" y1="67" x2="38" y2="75" stroke="#12bceb" stroke-width="6" stroke-linecap="round" />
-
-    <!-- Cyan Pill - Overlap with Magenta -->
-    <line x1="28" y1="67" x2="38" y2="75" stroke="#1b73a7" stroke-width="6" stroke-linecap="round" clip-path="url(#magenta-clip)" />
+    <!-- Cyan Fold -->
+    <path d="M 26 68 L 46 60 L 42 70 L 28 73 Z" fill="#12bceb" />
   </g>
 </svg>
