@@ -145,7 +145,7 @@ async def export_usuarios(db: AsyncSession = Depends(get_db), admin: User = Depe
         writer.writerow([
             str(u.id), u.nome, u.email, u.tipo.value if u.tipo else "",
             "Sim" if u.admin_aprovado else "Nao", u.turma_ou_equipe or "",
-            u.created_at.strftime("%Y-%m-%d %H:%M:%S") if u.created_at else ""
+            u.criado_em.strftime("%Y-%m-%d %H:%M:%S") if u.criado_em else ""
         ])
     
     output.seek(0)
