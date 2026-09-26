@@ -175,8 +175,8 @@ async def export_checkins(db: AsyncSession = Depends(get_db), admin: User = Depe
             checkin.turno_referencia or "",
             checkin.status.value if checkin.status else "",
             checkin.ip_publico or "",
-            str(checkin.latitude) if checkin.latitude else "",
-            str(checkin.longitude) if checkin.longitude else ""
+            "",
+            ""
         ])
     
     output.seek(0)
