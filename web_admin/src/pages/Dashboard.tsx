@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Users, CheckCircle, Search, LogOut, Activity, Trash2, Plus, Download, Eye, EyeOff, Calendar } from 'lucide-react';
+import { Users, CheckCircle, Search, LogOut, Activity, Trash2, Plus, Download, Eye, EyeOff, Calendar, GraduationCap, Briefcase } from 'lucide-react';
 import type { User } from '../services/api';
 import { API_URL, fetchUsers, approveUser, deleteUser, createAdmin, updateRole, justificarFalta } from '../services/api';
 import { LabLivreLogo } from '../components/LabLivreLogo';
@@ -9,6 +9,7 @@ export function Dashboard({ onLogout, isDark, toggleTheme }: { onLogout: () => v
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [viewTab, setViewTab] = useState<'STAFF' | 'ALUNO'>('STAFF');
   const [showPopup, setShowPopup] = useState<{ visible: boolean; userId: string | number | null; userName: string }>({ visible: false, userId: null, userName: '' });
   const [showAddAdmin, setShowAddAdmin] = useState(false);
   const [showJustificar, setShowJustificar] = useState({ visible: false, userId: null as string | number | null, userName: '', data: '', turno: 'MANHA' });
@@ -121,10 +122,12 @@ const confirmApprove = async () => {
     }
   };
 
-  const filteredUsers = users.filter(u => 
-    u.nome.toLowerCase().includes(search.toLowerCase()) || 
-    u.email.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredUsers = users.filter(u => {
+    const isAluno = u.tipo === 'ALUNO';
+    const matchTab = viewTab === 'ALUNO' ? isAluno : !isAluno;
+    const matchSearch = u.nome.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase());
+    return matchTab && matchSearch;
+  });
 
   return (
     <div className="min-h-screen bg-[#F0F2F5] dark:bg-[#0A0A0A] text-slate-900 dark:text-white font-sans overflow-x-hidden selection:bg-[#D12A6A] selection:text-white transition-colors duration-500">
@@ -174,40 +177,25 @@ const confirmApprove = async () => {
               Monitore credenciais, gerencie administradores e libere o acesso ao sistema.
             </p>
 
-          {/* Client Downloads */}
-          <div className="flex gap-2 w-full mt-4 sm:w-auto">
-            <a 
-              href="https://github.com/Andre-Atlas/lablivre-ponto-digital/releases/latest" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-3 py-2 bg-white/50 hover:bg-white dark:bg-white/[0.03] dark:hover:bg-white/[0.08] text-slate-600 dark:text-white/70 hover:text-[#00B9DE] dark:hover:text-[#00B9DE] font-medium tracking-wide text-[10px] uppercase rounded-lg border border-slate-200 dark:border-white/[0.08] shadow-sm transition-all active:scale-95 shrink-0"
-              title="Baixar para Windows"
-            >
-              Baixar Client (Windows)
-            </a>
-            <a 
-              href="https://github.com/Andre-Atlas/lablivre-ponto-digital/releases/latest" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-3 py-2 bg-white/50 hover:bg-white dark:bg-white/[0.03] dark:hover:bg-white/[0.08] text-slate-600 dark:text-white/70 hover:text-[#00B9DE] dark:hover:text-[#00B9DE] font-medium tracking-wide text-[10px] uppercase rounded-lg border border-slate-200 dark:border-white/[0.08] shadow-sm transition-all active:scale-95 shrink-0"
-              title="Baixar para macOS"
-            >
-              Baixar Client (Mac)
-            </a>
-            <a 
-              href="https://github.com/Andre-Atlas/lablivre-ponto-digital/releases/latest" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-3 py-2 bg-white/50 hover:bg-white dark:bg-white/[0.03] dark:hover:bg-white/[0.08] text-slate-600 dark:text-white/70 hover:text-[#00B9DE] dark:hover:text-[#00B9DE] font-medium tracking-wide text-[10px] uppercase rounded-lg border border-slate-200 dark:border-white/[0.08] shadow-sm transition-all active:scale-95 shrink-0"
-              title="Baixar para Linux"
-            >
-              Baixar Client (Linux)
-            </a>
-          </div>
-
           </div>
           
           <div className="flex flex-col xl:flex-row flex-wrap items-center justify-start xl:justify-end gap-3 w-full lg:w-auto mt-4 md:mt-0">
+            
+            <div className="flex bg-white/50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] rounded-xl p-1 backdrop-blur-md shadow-[inset_0_1px_3px_rgba(0,0,0,0.02)] dark:shadow-[inset_0_1px_3px_rgba(0,0,0,0.1)] w-full sm:w-auto">
+              <button
+                onClick={() => setViewTab('STAFF')}
+                className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-1.5 rounded-lg text-xs font-medium tracking-wide transition-all ${viewTab === 'STAFF' ? 'bg-white dark:bg-white/10 text-slate-800 dark:text-white shadow-sm' : 'text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white/70'}`}
+              >
+                <Briefcase size={14} /> Staff / Admin
+              </button>
+              <button
+                onClick={() => setViewTab('ALUNO')}
+                className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-1.5 rounded-lg text-xs font-medium tracking-wide transition-all ${viewTab === 'ALUNO' ? 'bg-white dark:bg-white/10 text-slate-800 dark:text-white shadow-sm' : 'text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white/70'}`}
+              >
+                <GraduationCap size={14} /> Alunos
+              </button>
+            </div>
+
             <div className="relative group w-full sm:w-64">
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                 <Search className="text-slate-400 dark:text-white/30 group-focus-within:text-[#D12A6A] dark:group-focus-within:text-[#D12A6A] transition-colors" size={16} />
@@ -295,9 +283,25 @@ const confirmApprove = async () => {
                         <div className="text-slate-500 dark:text-white/40 text-xs font-light transition-colors">{user.email}</div>
                       </td>
                       <td className="px-8 py-5">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-slate-100 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.05] text-slate-600 dark:text-white/60 text-[10px] font-medium tracking-wider uppercase transition-colors">
-                          {user.tipo}
-                        </span>
+                        {user.tipo === 'ALUNO' ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 text-indigo-700 dark:text-indigo-400 text-[10px] font-medium tracking-wider uppercase transition-colors">
+                            <GraduationCap size={12} /> ALUNO
+                          </span>
+                        ) : (user.role === 'SUPER_ADMIN' ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 text-amber-700 dark:text-amber-400 text-[10px] font-medium tracking-wider uppercase transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                            SUPER ADMIN
+                          </span>
+                        ) : (user.role === 'ADMIN' ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-blue-700 dark:text-blue-400 text-[10px] font-medium tracking-wider uppercase transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                            ADMIN
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.05] text-slate-600 dark:text-white/60 text-[10px] font-medium tracking-wider uppercase transition-colors">
+                            <Briefcase size={12} /> STAFF
+                          </span>
+                        )))}
                       </td>
                       <td className="px-8 py-5">
                         {user.admin_aprovado ? (
@@ -331,6 +335,7 @@ const confirmApprove = async () => {
                         >
                           <Calendar size={16} />
                         </button>
+{user.tipo !== 'ALUNO' && (
 <button
                           onClick={() => handlePromote(user.id, user.role || 'STAFF')}
                           className="text-slate-400 hover:text-[#00B9DE] dark:text-white/20 dark:hover:text-[#00B9DE] transition-colors mr-3"
@@ -338,6 +343,7 @@ const confirmApprove = async () => {
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m16 16 4-4-4-4"/><path d="M20 12H4"/></svg>
                         </button>
+)}
 <button 
                             onClick={() => handleDelete(user.id)}
                             className="text-slate-400 hover:text-red-500 dark:text-white/20 dark:hover:text-red-400 transition-colors"
