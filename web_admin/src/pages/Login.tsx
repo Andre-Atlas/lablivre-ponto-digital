@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Lock, ChevronRight } from 'lucide-react';
+import { Mail, Lock, ChevronRight, Eye, EyeOff } from 'lucide-react';
 import { LabLivreLogo } from '../components/LabLivreLogo';
 import { adminLogin } from '../services/api';
 import { ThemeToggle } from '../components/ThemeToggle';
@@ -8,6 +8,7 @@ export function Login({ onLogin, isDark, toggleTheme }: { onLogin: () => void, i
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -106,13 +107,20 @@ export function Login({ onLogin, isDark, toggleTheme }: { onLogin: () => void, i
                     <Lock size={16} className="text-slate-400 dark:text-white/30 group-focus-within:text-[#D12A6A] dark:group-focus-within:text-[#D12A6A] transition-colors duration-300" />
                   </div>
                   <input 
-                    type="password" 
+                    type={showPassword ? "text" : "password"}
                     required 
                     placeholder="••••••••"
                     value={password}
                     onChange={e => setPassword(e.target.value)}
-                    className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-white/[0.08] rounded-xl pl-11 pr-4 py-3.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20 text-sm outline-none focus:border-[#D12A6A]/50 focus:bg-white dark:focus:bg-black/40 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] dark:shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)]" 
+                    className="w-full bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-white/[0.08] rounded-xl pl-11 pr-12 py-3.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/20 text-sm outline-none focus:border-[#D12A6A]/50 focus:bg-white dark:focus:bg-black/40 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] dark:shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)]" 
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
                 </div>
               </div>
               
