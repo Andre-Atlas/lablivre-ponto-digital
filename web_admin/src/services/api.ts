@@ -5,6 +5,7 @@ export interface User {
   nome: string;
   email: string;
   tipo: string;
+  role?: string;
   admin_aprovado: boolean;
 }
 
@@ -34,14 +35,14 @@ export const adminLogin = async (email: string, password: string): Promise<{ acc
   return res.json();
 };
 
-export const createAdmin = async (nome: string, email: string, senha: string): Promise<void> => {
+export const createAdmin = async (nome: string, email: string, senha: string, role: string = "STAFF"): Promise<void> => {
   const res = await fetch(`${API_URL}/admin/usuarios`, {
     method: 'POST',
     headers: { 
       'Content-Type': 'application/json',
       Authorization: `Bearer ${localStorage.getItem('token')}` 
     },
-    body: JSON.stringify({ nome, email, senha })
+    body: JSON.stringify({ nome, email, senha, role })
   });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
@@ -58,5 +59,17 @@ export const deleteUser = async (id: string | number): Promise<void> => {
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
     throw new Error(data.detail || 'Failed to delete user');
+  }
+};
+
+export const updateRole = async (id: string | number, role: string): Promise<void> => {
+  const res = await fetch(`${API_URL}/admin/usuarios/${id}/role`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
+    body: JSON.stringify({ role })
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || 'Failed to update role');
   }
 };

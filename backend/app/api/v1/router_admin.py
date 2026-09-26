@@ -81,6 +81,7 @@ class CreateAdminRequest(BaseModel):
     nome: str
     email: str
     senha: str
+    role: str = "STAFF" 
 
 @router.post("/usuarios")
 async def create_admin(
@@ -98,6 +99,7 @@ async def create_admin(
         email=request.email,
         nome=request.nome,
         tipo=TipoUsuario.STAFF,
+        role=RoleAdmin(request.role.upper()) if request.role else RoleAdmin.STAFF,
         turma_ou_equipe="Administração",
         oauth_provider="manual",
         oauth_sub=f"manual_{uuid.uuid4()}",
@@ -410,3 +412,28 @@ async def justificar_falta(
         
     await db.commit()
     return {"status": "sucesso", "mensagem": "Falta/Atraso justificado com sucesso."}
+
+class UpdateRoleRequest(BaseModel):
+    role: str
+
+@router.put("/usuarios/{user_id}/role")
+async def update_user_role(
+    user_id: str,
+    request: UpdateRoleRequest,
+    db: AsyncSession = Depends(get_db),
+    admin: UserORM = Depends(require_admin)
+):
+    if admin.role != RoleAdmin.SUPER_ADMIN:
+        raise HTTPException(status_code=403, detail="Apenas Super Admins podem alterar cargos.")
+        
+    result = await db.execute(select(UserModel).where(UserModel.id == user_id))
+    user = result.scalars().first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+        
+    try:
+        user.role = RoleAdmin(request.role.upper())
+        await db.commit()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Role inválida.")
+    return {"status": "ok"}

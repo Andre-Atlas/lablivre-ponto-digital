@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Users, CheckCircle, Search, LogOut, Activity, Trash2, Plus, Download, Eye, EyeOff } from 'lucide-react';
 import type { User } from '../services/api';
-import { API_URL, fetchUsers, approveUser, deleteUser, createAdmin } from '../services/api';
+import { API_URL, fetchUsers, approveUser, deleteUser, createAdmin, updateRole } from '../services/api';
 import { LabLivreLogo } from '../components/LabLivreLogo';
 import { ThemeToggle } from '../components/ThemeToggle';
 
@@ -11,7 +11,7 @@ export function Dashboard({ onLogout, isDark, toggleTheme }: { onLogout: () => v
   const [search, setSearch] = useState('');
   const [showPopup, setShowPopup] = useState<{ visible: boolean; userId: string | number | null; userName: string }>({ visible: false, userId: null, userName: '' });
   const [showAddAdmin, setShowAddAdmin] = useState(false);
-  const [newAdmin, setNewAdmin] = useState({ nome: '', email: '', senha: '' });
+  const [newAdmin, setNewAdmin] = useState({ nome: '', email: '', senha: '', role: 'STAFF' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -55,7 +55,18 @@ export function Dashboard({ onLogout, isDark, toggleTheme }: { onLogout: () => v
     }
   };
 
-  const confirmApprove = async () => {
+  
+  const handlePromote = async (id: string | number, currentRole: string) => {
+    const newRole = currentRole === 'SUPER_ADMIN' ? 'ADMIN' : (currentRole === 'ADMIN' ? 'SUPER_ADMIN' : 'ADMIN');
+    if (!window.confirm(`Tem certeza que deseja alterar o cargo deste usuário para ${newRole}?`)) return;
+    try {
+      await updateRole(id, newRole);
+      loadUsers();
+    } catch(e: any) {
+      alert(e.message);
+    }
+  };
+const confirmApprove = async () => {
     if (!showPopup.userId) return;
     try {
       await approveUser(showPopup.userId);
@@ -81,10 +92,10 @@ export function Dashboard({ onLogout, isDark, toggleTheme }: { onLogout: () => v
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      await createAdmin(newAdmin.nome, newAdmin.email, newAdmin.senha);
+      await createAdmin(newAdmin.nome, newAdmin.email, newAdmin.senha, newAdmin.role);
       await loadUsers();
       setShowAddAdmin(false);
-      setNewAdmin({ nome: '', email: '', senha: '' });
+      setNewAdmin({ nome: '', email: '', senha: '', role: 'STAFF' });
     } catch (err: any) {
       alert(err.message || 'Erro ao criar administrador');
     } finally {
@@ -144,6 +155,38 @@ export function Dashboard({ onLogout, isDark, toggleTheme }: { onLogout: () => v
             <p className="text-slate-500 dark:text-white/40 font-light text-sm max-w-xl transition-colors">
               Monitore credenciais, gerencie administradores e libere o acesso ao sistema.
             </p>
+
+          {/* Client Downloads */}
+          <div className="flex gap-2 w-full mt-4 sm:w-auto">
+            <a 
+              href="https://github.com/Andre-Atlas/lablivre-ponto-digital/releases/latest" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-3 py-2 bg-white/50 hover:bg-white dark:bg-white/[0.03] dark:hover:bg-white/[0.08] text-slate-600 dark:text-white/70 hover:text-[#00B9DE] dark:hover:text-[#00B9DE] font-medium tracking-wide text-[10px] uppercase rounded-lg border border-slate-200 dark:border-white/[0.08] shadow-sm transition-all active:scale-95 shrink-0"
+              title="Baixar para Windows"
+            >
+              Baixar Client (Windows)
+            </a>
+            <a 
+              href="https://github.com/Andre-Atlas/lablivre-ponto-digital/releases/latest" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-3 py-2 bg-white/50 hover:bg-white dark:bg-white/[0.03] dark:hover:bg-white/[0.08] text-slate-600 dark:text-white/70 hover:text-[#00B9DE] dark:hover:text-[#00B9DE] font-medium tracking-wide text-[10px] uppercase rounded-lg border border-slate-200 dark:border-white/[0.08] shadow-sm transition-all active:scale-95 shrink-0"
+              title="Baixar para macOS"
+            >
+              Baixar Client (Mac)
+            </a>
+            <a 
+              href="https://github.com/Andre-Atlas/lablivre-ponto-digital/releases/latest" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-3 py-2 bg-white/50 hover:bg-white dark:bg-white/[0.03] dark:hover:bg-white/[0.08] text-slate-600 dark:text-white/70 hover:text-[#00B9DE] dark:hover:text-[#00B9DE] font-medium tracking-wide text-[10px] uppercase rounded-lg border border-slate-200 dark:border-white/[0.08] shadow-sm transition-all active:scale-95 shrink-0"
+              title="Baixar para Linux"
+            >
+              Baixar Client (Linux)
+            </a>
+          </div>
+
           </div>
           
           <div className="flex flex-col xl:flex-row flex-wrap items-center justify-start xl:justify-end gap-3 w-full lg:w-auto mt-4 md:mt-0">
@@ -261,7 +304,15 @@ export function Dashboard({ onLogout, isDark, toggleTheme }: { onLogout: () => v
                               Autorizar
                             </button>
                           )}
-                          <button 
+                          
+                        <button
+                          onClick={() => handlePromote(user.id, user.role || 'STAFF')}
+                          className="text-slate-400 hover:text-[#00B9DE] dark:text-white/20 dark:hover:text-[#00B9DE] transition-colors mr-3"
+                          title="Alterar Cargo (Promover/Rebaixar)"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m16 16 4-4-4-4"/><path d="M20 12H4"/></svg>
+                        </button>
+<button 
                             onClick={() => handleDelete(user.id)}
                             className="text-slate-400 hover:text-red-500 dark:text-white/20 dark:hover:text-red-400 transition-colors"
                             title="Excluir Usuário"
@@ -353,7 +404,20 @@ export function Dashboard({ onLogout, isDark, toggleTheme }: { onLogout: () => v
                     placeholder="joao@lablivre.com"
                   />
                 </div>
+                
                 <div>
+                  <label className="block text-[10px] uppercase tracking-widest text-slate-500 dark:text-white/40 mb-1.5 ml-1">Cargo</label>
+                  <select
+                    value={newAdmin.role}
+                    onChange={e => setNewAdmin({...newAdmin, role: e.target.value})}
+                    className="w-full bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] rounded-xl px-4 py-2.5 focus:outline-none focus:border-[#00B9DE]/50 focus:bg-white dark:focus:bg-white/[0.05] transition-all font-light text-sm text-slate-900 dark:text-white shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
+                  >
+                    <option value="STAFF">Staff (Apenas Ponto)</option>
+                    <option value="ADMIN">Admin (Exportar e Editar)</option>
+                    <option value="SUPER_ADMIN">Super Admin (Todos os privilégios)</option>
+                  </select>
+                </div>
+<div>
                   <label className="block text-[10px] uppercase tracking-widest text-slate-500 dark:text-white/40 mb-1.5 ml-1">Senha Provisória</label>
                   <div className="relative">
                   <input 
