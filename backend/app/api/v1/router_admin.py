@@ -155,13 +155,14 @@ async def export_usuarios(db: AsyncSession = Depends(get_db), admin: User = Depe
         headers={"Content-Disposition": "attachment; filename=usuarios_lablivre.csv"}
     )
 
+from typing import Optional
 @router.get("/export/checkins")
-async def export_checkins(db: AsyncSession = Depends(get_db), admin: User = Depends(require_admin)):
-    result = await db.execute(
-        select(CheckInModel, UserModel)
-        .join(UserModel, CheckInModel.user_id == UserModel.id)
-        .order_by(CheckInModel.hora_checkin.desc())
-    )
+async def export_checkins(tipo: Optional[TipoUsuario] = None, db: AsyncSession = Depends(get_db), admin: User = Depends(require_admin)):
+    query = select(CheckInModel, UserModel).join(UserModel, CheckInModel.user_id == UserModel.id)
+    if tipo:
+        query = query.where(UserModel.tipo == tipo)
+    query = query.order_by(CheckInModel.hora_checkin.desc())
+    result = await db.execute(query)
     rows = result.all()
     
     output = io.StringIO()
