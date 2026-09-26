@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Users, CheckCircle, Clock, Search, LogOut, ChevronRight, Activity, Trash2, Plus, Download } from 'lucide-react';
+import { Users, CheckCircle, Search, LogOut, Activity, Trash2, Plus, Download } from 'lucide-react';
 import type { User } from '../services/api';
 import { fetchUsers, approveUser, deleteUser, createAdmin } from '../services/api';
 import { LabLivreLogo } from '../components/LabLivreLogo';
@@ -58,7 +58,7 @@ export function Dashboard({ onLogout, isDark, toggleTheme }: { onLogout: () => v
       await createAdmin(newAdmin.nome, newAdmin.email);
       await loadUsers();
       setShowAddAdmin(false);
-      setNewAdmin({ nome: '', email: '' });
+      setNewAdmin({ nome: '', email: '', senha: '' });
     } catch (err: any) {
       alert(err.message || 'Erro ao criar administrador');
     } finally {

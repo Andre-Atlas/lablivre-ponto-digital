@@ -1,4 +1,3 @@
-import React from 'react';
 
 export function EldoradoLogo({ className = "" }: { className?: string }) {
   return (
