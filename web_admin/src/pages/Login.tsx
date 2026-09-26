@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LogIn, Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { LabLivreLogo } from '../components/LabLivreLogo';
 
 export function Login({ onLogin }: { onLogin: () => void }) {

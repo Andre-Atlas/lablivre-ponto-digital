@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Users, CheckCircle, Clock, Search, LogOut, Trash2, Monitor, Download } from 'lucide-react';
-import { User, fetchUsers, approveUser, deleteUser } from '../services/api';
+import type { User } from "../services/api";
+import { fetchUsers, approveUser, deleteUser } from '../services/api';
 
 const getRoleBadge = (tipo: string) => {
   const role = tipo.toUpperCase();

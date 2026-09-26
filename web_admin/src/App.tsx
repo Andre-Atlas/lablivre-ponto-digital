@@ -25,7 +25,6 @@ function App() {
     }
   }, [isDark]);
 
-  const toggleTheme = () => setIsDark(!isDark);
 
   const handleLogin = () => setIsAuthenticated(true);
   
@@ -35,8 +34,8 @@ function App() {
   };
 
   return isAuthenticated 
-    ? <Dashboard onLogout={handleLogout} isDark={isDark} toggleTheme={toggleTheme} /> 
-    : <Login onLogin={handleLogin} isDark={isDark} toggleTheme={toggleTheme} />;
+    ? <Dashboard onLogout={handleLogout} /> 
+    : <Login onLogin={handleLogin} />;
 }
 
 export default App;
