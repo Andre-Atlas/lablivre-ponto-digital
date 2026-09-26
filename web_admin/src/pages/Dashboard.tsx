@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Users, CheckCircle, Search, LogOut, Activity, Trash2, Plus, Download } from 'lucide-react';
 import type { User } from '../services/api';
-import { fetchUsers, approveUser, deleteUser, createAdmin } from '../services/api';
+import { API_URL, fetchUsers, approveUser, deleteUser, createAdmin } from '../services/api';
 import { LabLivreLogo } from '../components/LabLivreLogo';
 import { ThemeToggle } from '../components/ThemeToggle';
 
@@ -136,7 +136,7 @@ export function Dashboard({ onLogout, isDark, toggleTheme }: { onLogout: () => v
             
             <div className="flex gap-2 w-full sm:w-auto">
               <a 
-                href="http://127.0.0.1:8000/api/v1/admin/export/checkins"
+                href={`${API_URL}/admin/export/checkins`}
                 target="_blank"
                 rel="noreferrer"
                 className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-3 py-2.5 bg-white/50 hover:bg-white dark:bg-white/[0.03] dark:hover:bg-white/[0.08] text-slate-600 dark:text-white/70 hover:text-slate-900 dark:hover:text-white font-medium tracking-wide text-[11px] uppercase rounded-xl border border-slate-200 dark:border-white/[0.08] shadow-sm transition-all active:scale-95"
@@ -146,7 +146,7 @@ export function Dashboard({ onLogout, isDark, toggleTheme }: { onLogout: () => v
                 <span className="hidden sm:inline">Pontos</span>
               </a>
               <a 
-                href="http://127.0.0.1:8000/api/v1/admin/export/usuarios"
+                href={`${API_URL}/admin/export/usuarios`}
                 target="_blank"
                 rel="noreferrer"
                 className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-3 py-2.5 bg-white/50 hover:bg-white dark:bg-white/[0.03] dark:hover:bg-white/[0.08] text-slate-600 dark:text-white/70 hover:text-slate-900 dark:hover:text-white font-medium tracking-wide text-[11px] uppercase rounded-xl border border-slate-200 dark:border-white/[0.08] shadow-sm transition-all active:scale-95"
