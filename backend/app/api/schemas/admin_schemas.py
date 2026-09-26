@@ -9,6 +9,7 @@ class UserAdminResponse(BaseModel):
     email: str
     nome: str
     tipo: TipoUsuario
+    role: Optional[str] = None
     turma_ou_equipe: str
     patrimonio: Optional[str] = None
     ativo: bool
