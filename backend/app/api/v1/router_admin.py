@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from uuid import UUID
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
+from typing import Optional
 from app.adapters.persistence.database import get_db
 from app.adapters.persistence.orm_models import User as UserModel
 from app.api.middleware.auth_dependencies import get_current_user
@@ -12,10 +13,12 @@ from app.domain.enums import TipoUsuario, RoleAdmin
 router = APIRouter(prefix="/admin", tags=["Administração"])
 
 class UserAdminResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: UUID
     nome: str
     email: str
     tipo: TipoUsuario
+    role: Optional[RoleAdmin] = None
     admin_aprovado: bool
 
 async def require_admin(
@@ -47,15 +50,7 @@ async def list_usuarios(
 ):
     result = await db.execute(select(UserModel))
     users = result.scalars().all()
-    return [
-        UserAdminResponse(
-            id=u.id, 
-            nome=u.nome, 
-            email=u.email, 
-            tipo=u.tipo, 
-            admin_aprovado=u.admin_aprovado
-        ) for u in users
-    ]
+    return users  # Let FastAPI serialize it. We just need from_attributes=True in schema.
 
 @router.post("/usuarios/{user_id}/aprovar")
 async def aprovar_usuario(
@@ -421,7 +416,7 @@ async def update_user_role(
     user_id: str,
     request: UpdateRoleRequest,
     db: AsyncSession = Depends(get_db),
-    admin: UserORM = Depends(require_admin)
+    admin: UserModel = Depends(require_admin)
 ):
     if admin.role != RoleAdmin.SUPER_ADMIN:
         raise HTTPException(status_code=403, detail="Apenas Super Admins podem alterar cargos.")
