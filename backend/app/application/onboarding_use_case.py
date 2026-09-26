@@ -34,7 +34,7 @@ class OnboardingUseCase:
         usuario_existente = await self.user_repo.buscar_por_email(email)
         if usuario_existente:
             # Verifica se o dispositivo atual está registrado para este usuário
-            dispositivos_do_usuario = await self.device_repo.listar_por_usuario(usuario_existente.id)
+            dispositivos_do_usuario = await self.device_repo.buscar_por_user(usuario_existente.id)
             mac_existente = any(d.mac_address == request.device_mac for d in dispositivos_do_usuario)
             
             if not mac_existente:
