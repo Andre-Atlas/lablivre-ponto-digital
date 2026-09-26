@@ -50,6 +50,8 @@ from pydantic import BaseModel
 from app.domain.enums import TipoUsuario
 from app.adapters.auth.jwt_handler import create_access_token
 
+from app.adapters.persistence.orm_models import User as UserORM
+from sqlalchemy.future import select
 from app.utils.security import verify_password
 
 class AdminLoginRequest(BaseModel):
@@ -58,8 +60,8 @@ class AdminLoginRequest(BaseModel):
 
 @router.post("/admin-login")
 async def admin_login(request: AdminLoginRequest, db: AsyncSession = Depends(get_db)):
-    user_repo = UserRepositoryImpl(db)
-    user = await user_repo.buscar_por_email(request.email)
+    result = await db.execute(select(UserORM).where(UserORM.email == request.email))
+    user = result.scalars().first()
     
     if not user or user.tipo != TipoUsuario.STAFF:
         raise HTTPException(status_code=403, detail="Acesso negado: apenas administradores")
