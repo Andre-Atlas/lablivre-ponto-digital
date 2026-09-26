@@ -85,7 +85,7 @@ export function Dashboard({ onLogout, isDark, toggleTheme }: { onLogout: () => v
       <header className="sticky top-0 z-30 backdrop-blur-[20px] bg-white/40 dark:bg-[#0A0A0A]/40 border-b border-slate-200 dark:border-white/[0.05] transition-colors duration-500">
         <div className="max-w-6xl mx-auto px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-5">
-            <LabLivreLogo className="w-28 drop-shadow-sm dark:drop-shadow-md" isDark={isDark} />
+            <LabLivreLogo className="w-28 drop-shadow-sm dark:drop-shadow-md" />
             <div className="h-4 w-px bg-slate-300 dark:bg-white/10 hidden sm:block transition-colors"></div>
             <div className="hidden sm:flex items-center gap-2">
               <Activity size={14} className="text-[#00B9DE]" />

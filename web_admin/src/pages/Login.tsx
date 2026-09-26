@@ -42,7 +42,7 @@ export function Login({ onLogin, isDark, toggleTheme }: { onLogin: () => void, i
       {/* Brand Context (Left) */}
       <div className="hidden lg:flex flex-1 flex-col justify-center px-24 relative z-10 selection:bg-[#D12A6A] selection:text-white">
         <div className="max-w-xl">
-          <LabLivreLogo className="w-64 mb-12 drop-shadow-xl" isDark={isDark} />
+          <LabLivreLogo className="w-64 mb-12 drop-shadow-xl" />
           
           <h1 className="text-5xl md:text-6xl tracking-tighter leading-[1.1] mb-8 font-medium">
             O hub central de<br/>

@@ -1,6 +1,5 @@
-export function LabLivreLogo({ className = "", isDark = false }: { className?: string, isDark?: boolean }) {
-  // Ignoramos a prop isDark e deixamos o CSS puro (Tailwind) cuidar da troca de imagem
-  // Isso garante que funcione 100% sincronizado com a classe 'dark' do <html>
+export function LabLivreLogo({ className = "" }: { className?: string }) {
+  // O CSS puro (Tailwind) cuida da troca de imagem entre claro e escuro
   return (
     <>
       <img 
