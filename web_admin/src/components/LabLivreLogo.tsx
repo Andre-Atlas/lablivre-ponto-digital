@@ -1,10 +1,18 @@
 export function LabLivreLogo({ className = "", isDark = false }: { className?: string, isDark?: boolean }) {
-  // Se isDark for passado ou se a classe 'dark' estiver ativa no tailwind, aplica a sombra
+  // Ignoramos a prop isDark e deixamos o CSS puro (Tailwind) cuidar da troca de imagem
+  // Isso garante que funcione 100% sincronizado com a classe 'dark' do <html>
   return (
-    <img 
-      src="/logo-lablivre.png" 
-      alt="Lab Livre Logo" 
-      className={`object-contain ${className} ${isDark ? 'drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]' : 'dark:drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]'}`} 
-    />
+    <>
+      <img 
+        src="/logo-lablivre.png" 
+        alt="Lab Livre Logo" 
+        className={`object-contain block dark:hidden ${className}`} 
+      />
+      <img 
+        src="/logo-lablivre-dark.png" 
+        alt="Lab Livre Logo" 
+        className={`object-contain hidden dark:block ${className}`} 
+      />
+    </>
   );
 }
