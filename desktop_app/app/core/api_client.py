@@ -14,11 +14,11 @@ class ApiClient:
         return h
 
     def get(self, endpoint: str):
-        with httpx.Client() as client:
+        with httpx.Client(timeout=30.0) as client:
             return client.get(f"{self.base_url}{endpoint}", headers=self.headers)
 
     def post(self, endpoint: str, json: dict = None):
-        with httpx.Client() as client:
+        with httpx.Client(timeout=30.0) as client:
             return client.post(f"{self.base_url}{endpoint}", json=json, headers=self.headers)
 
 api = ApiClient()

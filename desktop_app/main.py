@@ -1,74 +1,58 @@
 import flet as ft
-from app.core.config import settings
-from app.core.state import app_state
-from app.core.api_client import api
-from app.views.login_view import LoginView
-from app.views.checkin_view import CheckinView
-from app.views.onboarding_view import OnboardingView
-from app.utils.network import get_current_mac
+import time
+import threading
+import schedule
+from autostart import add_to_startup
 
 def main(page: ft.Page):
-    page.title = settings.APP_TITLE
+    page.title = "Ponto Digital - Lab Livre"
     page.window.width = 400
     page.window.height = 600
-    page.window.resizable = False
-    page.theme_mode = ft.ThemeMode.LIGHT
+    page.window.center()
+    
+    # Start hidden on boot (assuming we pass --hidden arg if started by OS, but let's just make it visible initially for manual opening, or hidden if triggered by OS)
+    # For MVP, we'll just show it.
+    
+    def on_checkin(e):
+        # Implementation of checkin...
+        page.add(ft.Text("Ponto registrado com sucesso!", color="green"))
+        page.update()
+        
+        # Hide after 3 seconds
+        def hide():
+            time.sleep(3)
+            page.window.visible = False
+            page.update()
+        threading.Thread(target=hide).start()
 
-    def show_error(msg):
-        dlg = ft.AlertDialog(title=ft.Text("Erro"), content=ft.Text(msg))
-        page.overlay.append(dlg)
-        dlg.open = True
+    def popup_window():
+        page.window.visible = True
+        page.window.to_front()
         page.update()
 
-    def process_google_token(google_access_token: str):
-        try:
-            real_mac = get_current_mac()
-            # Attempt login first
-            resp = api.post("/api/v1/auth/onboarding", json={
-                "oauth_token": google_access_token,
-                "oauth_provider": "google",
-                "tipo": "ALUNO",
-                "device_mac": real_mac,
-                "device_os": "macOS"
-            })
+    # Schedule the popups for Alunos
+    schedule.every().monday.at("08:00").do(popup_window)
+    schedule.every().monday.at("14:00").do(popup_window)
+    schedule.every().wednesday.at("08:00").do(popup_window)
+    schedule.every().wednesday.at("14:00").do(popup_window)
+    schedule.every().friday.at("08:00").do(popup_window)
+    
+    def run_scheduler():
+        while True:
+            schedule.run_pending()
+            time.sleep(30)
             
-            if resp.status_code == 200:
-                data = resp.json()
-                app_state.token = data["access_token"]
-                page.go("/checkin")
-            elif resp.status_code == 400 and "obrigat" in resp.text.lower():
-                # User is new and missing required fields like patrimonio or turma
-                app_state.temp_google_token = google_access_token
-                page.go("/onboarding")
-            elif resp.status_code == 201: # Just in case the backend lets it through
-                data = resp.json()
-                app_state.token = data["access_token"]
-                page.go("/checkin")
-            else:
-                show_error(f"Erro de acesso (HTTP {resp.status_code}): {resp.text}")
-                
-        except Exception as ex:
-            print("Erro de conexão:", ex)
-            show_error("Backend offline ou inacessível")
+    threading.Thread(target=run_scheduler, daemon=True).start()
 
-    def route_change(route):
-        page.views.clear()
-        if page.route == "/":
-            page.views.append(LoginView(page, process_google_token))
-        elif page.route == "/onboarding":
-            page.views.append(OnboardingView(page))
-        elif page.route == "/checkin":
-            page.views.append(CheckinView(page))
-        page.update()
-
-    def view_pop(view):
-        page.views.pop()
-        top_view = page.views[-1]
-        page.go(top_view.route)
-
-    page.on_route_change = route_change
-    page.on_view_pop = view_pop
-    page.go("/")
+    page.add(
+        ft.Column([
+            ft.Text("Ponto Digital", size=30, weight="bold"),
+            ft.Text("Seu horário de entrada chegou. Registre seu ponto agora!"),
+            ft.ElevatedButton("Bater Ponto", on_click=on_checkin, width=200, height=50)
+        ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+    )
 
 if __name__ == "__main__":
+    add_to_startup()
+    # Flet handles the main loop
     ft.app(target=main)

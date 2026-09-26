@@ -12,6 +12,7 @@ class RoleAdmin(str, Enum):
     SUPER_ADMIN = "SUPER_ADMIN"
     ADMIN = "ADMIN"
     VIEWER = "VIEWER"
+    NONE = "NONE"
 
 class DiaSemana(str, Enum):
     SEG = "SEG"

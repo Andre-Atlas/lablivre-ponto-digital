@@ -21,6 +21,7 @@ class RoleAdmin(str, enum.Enum):
     SUPER_ADMIN = 'SUPER_ADMIN'
     ADMIN = 'ADMIN'
     VIEWER = 'VIEWER'
+    NONE = 'NONE'
 
 class User(Base):
     __tablename__ = 'users'
@@ -29,6 +30,7 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     nome: Mapped[str] = mapped_column(String(255), nullable=False)
     tipo: Mapped[TipoUsuario] = mapped_column(SAEnum(TipoUsuario), nullable=False)
+    role: Mapped[RoleAdmin] = mapped_column(SAEnum(RoleAdmin), default=RoleAdmin.NONE, server_default='NONE', nullable=False)
     turma_ou_equipe: Mapped[str] = mapped_column(String(100), nullable=False)
     oauth_provider: Mapped[str] = mapped_column(String(50), nullable=False)
     oauth_sub: Mapped[str] = mapped_column(String(255), nullable=False)

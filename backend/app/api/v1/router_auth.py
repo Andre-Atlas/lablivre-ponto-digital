@@ -47,7 +47,7 @@ async def onboarding(request: OnboardingRequest, db: AsyncSession = Depends(get_
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 from pydantic import BaseModel
-from app.domain.enums import TipoUsuario
+from app.domain.enums import TipoUsuario, RoleAdmin
 from app.adapters.auth.jwt_handler import create_access_token
 
 from app.adapters.persistence.orm_models import User as UserORM
@@ -63,7 +63,7 @@ async def admin_login(request: AdminLoginRequest, db: AsyncSession = Depends(get
     result = await db.execute(select(UserORM).where(UserORM.email == request.email))
     user = result.scalars().first()
     
-    if not user or user.tipo != TipoUsuario.STAFF:
+    if not user or user.role not in [RoleAdmin.SUPER_ADMIN, RoleAdmin.ADMIN]:
         raise HTTPException(status_code=403, detail="Acesso negado: apenas administradores")
         
     if not user.senha_hash or not verify_password(request.password, user.senha_hash):

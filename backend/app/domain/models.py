@@ -11,7 +11,7 @@ from datetime import datetime, time, date, timedelta
 from uuid import UUID
 from typing import Optional
 
-from .enums import TipoUsuario, StatusCheckin, DiaSemana, Turno
+from .enums import TipoUsuario, StatusCheckin, DiaSemana, Turno, RoleAdmin
 
 
 # ──────────────────────────────────────────────
@@ -34,6 +34,7 @@ class User:
     admin_aprovado: bool
     criado_em: datetime
     atualizado_em: datetime
+    role: RoleAdmin = field(default=RoleAdmin.NONE)
     patrimonio: Optional[str] = None
 
 
@@ -90,6 +91,7 @@ class Config:
     chave: str
     valor: str
     atualizado_em: datetime
+    role: RoleAdmin = field(default=RoleAdmin.NONE)
     atualizado_por: Optional[UUID] = None
 
 

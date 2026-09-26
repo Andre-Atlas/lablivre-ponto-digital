@@ -107,6 +107,8 @@ def CheckinView(page: ft.Page):
                 status_text.color = ft.Colors.RED_ACCENT_700
                 icon_container.content.name = ft.Icons.WARNING_AMBER_ROUNDED
         except Exception as ex:
+            print(f'ERRO CHECKIN: {ex}')
+            import traceback; traceback.print_exc()
             save_offline_checkin(mac, wifi["ssid"], wifi["bssids"])
             status_text.value = "Offline. Ponto salvo no dispositivo."
             status_text.color = ft.Colors.AMBER_800
