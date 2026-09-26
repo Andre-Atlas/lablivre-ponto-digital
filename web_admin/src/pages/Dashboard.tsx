@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Users, CheckCircle, Search, LogOut, Activity, Trash2, Plus, Download, Eye, EyeOff } from 'lucide-react';
+import { Users, CheckCircle, Search, LogOut, Activity, Trash2, Plus, Download, Eye, EyeOff, Calendar } from 'lucide-react';
 import type { User } from '../services/api';
-import { API_URL, fetchUsers, approveUser, deleteUser, createAdmin, updateRole } from '../services/api';
+import { API_URL, fetchUsers, approveUser, deleteUser, createAdmin, updateRole, justificarFalta } from '../services/api';
 import { LabLivreLogo } from '../components/LabLivreLogo';
 import { ThemeToggle } from '../components/ThemeToggle';
 
@@ -11,6 +11,7 @@ export function Dashboard({ onLogout, isDark, toggleTheme }: { onLogout: () => v
   const [search, setSearch] = useState('');
   const [showPopup, setShowPopup] = useState<{ visible: boolean; userId: string | number | null; userName: string }>({ visible: false, userId: null, userName: '' });
   const [showAddAdmin, setShowAddAdmin] = useState(false);
+  const [showJustificar, setShowJustificar] = useState({ visible: false, userId: null as string | number | null, userName: '', data: '', turno: 'MANHA' });
   const [newAdmin, setNewAdmin] = useState({ nome: '', email: '', senha: '', role: 'STAFF' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -85,6 +86,23 @@ const confirmApprove = async () => {
       setUsers(users.filter(u => u.id !== id));
     } catch (err: any) {
       alert(err.message || 'Erro ao excluir usuário');
+    }
+  };
+
+  
+  const handleJustificar = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!showJustificar.userId || !showJustificar.data) return;
+    setIsSubmitting(true);
+    try {
+      await justificarFalta(showJustificar.userId, showJustificar.data, showJustificar.turno);
+      alert('Falta justificada com sucesso!');
+      setShowJustificar({ visible: false, userId: null, userName: '', data: '', turno: 'MANHA' });
+      loadUsers();
+    } catch(err: any) {
+      alert(err.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -305,7 +323,15 @@ const confirmApprove = async () => {
                             </button>
                           )}
                           
+                        
                         <button
+                          onClick={() => setShowJustificar({ visible: true, userId: user.id, userName: user.nome, data: new Date().toISOString().split('T')[0], turno: 'MANHA' })}
+                          className="p-2 text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-xl transition-colors mr-1"
+                          title="Justificar Falta"
+                        >
+                          <Calendar size={16} />
+                        </button>
+<button
                           onClick={() => handlePromote(user.id, user.role || 'STAFF')}
                           className="text-slate-400 hover:text-[#00B9DE] dark:text-white/20 dark:hover:text-[#00B9DE] transition-colors mr-3"
                           title="Alterar Cargo (Promover/Rebaixar)"
@@ -360,6 +386,66 @@ const confirmApprove = async () => {
                   className="flex-1 py-2.5 px-4 bg-[#D12A6A] hover:bg-[#B01E55] text-white font-medium rounded-xl shadow-[0_4px_14px_rgba(209,42,106,0.3)] hover:shadow-[0_6px_20px_rgba(209,42,106,0.4)] transition-all tracking-wide text-xs active:scale-95 border border-[#D12A6A]"
                 >
                   Confirmar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      
+      {/* Justificar Modal */}
+      {showJustificar.visible && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm transition-opacity" onClick={() => setShowJustificar({ ...showJustificar, visible: false })}></div>
+          
+          <div className="relative w-full max-w-sm backdrop-blur-[40px] bg-white/90 dark:bg-[#0A0A0A]/80 border border-slate-200 dark:border-white/[0.08] rounded-[2rem] p-8 shadow-[0_24px_48px_rgba(0,0,0,0.1)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_24px_48px_rgba(0,0,0,0.6)] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="absolute -top-24 -right-24 w-48 h-48 bg-emerald-500/10 dark:bg-emerald-500/20 rounded-full blur-[60px] pointer-events-none mix-blend-multiply dark:mix-blend-screen"></div>
+            
+            <div className="relative z-10">
+              <h3 className="text-xl font-medium tracking-tight mb-2 text-slate-900 dark:text-white">Justificar Falta</h3>
+              <p className="text-slate-600 dark:text-white/50 font-light text-sm mb-6 leading-relaxed">
+                Adicione uma justificativa de falta para <span className="text-slate-900 dark:text-white font-medium">{showJustificar.userName}</span>.
+              </p>
+              
+              <form onSubmit={handleJustificar} className="space-y-4 mb-8">
+                <div>
+                  <label className="block text-[10px] uppercase tracking-widest text-slate-500 dark:text-white/40 mb-1.5 ml-1">Data (YYYY-MM-DD)</label>
+                  <input 
+                    type="date" 
+                    required
+                    value={showJustificar.data}
+                    onChange={e => setShowJustificar({...showJustificar, data: e.target.value})}
+                    className="w-full bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] rounded-xl px-4 py-2.5 focus:outline-none focus:border-emerald-500/50 focus:bg-white dark:focus:bg-white/[0.05] transition-all font-light text-sm text-slate-900 dark:text-white shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase tracking-widest text-slate-500 dark:text-white/40 mb-1.5 ml-1">Turno</label>
+                  <select
+                    value={showJustificar.turno}
+                    onChange={e => setShowJustificar({...showJustificar, turno: e.target.value})}
+                    className="w-full bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] rounded-xl px-4 py-2.5 focus:outline-none focus:border-emerald-500/50 focus:bg-white dark:focus:bg-white/[0.05] transition-all font-light text-sm text-slate-900 dark:text-white shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
+                  >
+                    <option value="MANHA">Manhã</option>
+                    <option value="TARDE">Tarde</option>
+                  </select>
+                </div>
+                <button type="submit" className="hidden"></button>
+              </form>
+              
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setShowJustificar({ ...showJustificar, visible: false })}
+                  className="flex-1 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-white/[0.03] dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-white/70 font-medium rounded-xl transition-all tracking-wide text-xs active:scale-95"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={handleJustificar}
+                  disabled={isSubmitting || !showJustificar.data}
+                  className="flex-1 py-2.5 px-4 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-xl shadow-[0_4px_14px_rgba(16,185,129,0.3)] hover:shadow-[0_6px_20px_rgba(16,185,129,0.4)] transition-all tracking-wide text-xs active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed border border-emerald-500"
+                >
+                  {isSubmitting ? 'Salvando...' : 'Confirmar'}
                 </button>
               </div>
             </div>

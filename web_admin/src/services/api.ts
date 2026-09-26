@@ -73,3 +73,18 @@ export const updateRole = async (id: string | number, role: string): Promise<voi
     throw new Error(data.detail || 'Failed to update role');
   }
 };
+
+export const justificarFalta = async (id: string | number, data: string, turno: string): Promise<void> => {
+  const res = await fetch(`${API_URL}/admin/usuarios/${id}/justificar`, {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${localStorage.getItem('token')}` 
+    },
+    body: JSON.stringify({ data, turno })
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || 'Falha ao justificar falta');
+  }
+};
