@@ -1,26 +1,29 @@
-
 export function LabLivreLogo({ className = "", isDark = true }: { className?: string, isDark?: boolean }) {
-  const strokeColor = isDark ? "#ffffff" : "#0f172a";
-  const textColor = isDark ? "#ffffff" : "#0f172a";
+  const textColor = isDark ? "#ffffff" : "#000000";
+  const lineColor = isDark ? "#ffffff" : "#000000";
 
   return (
-    <svg viewBox="0 0 240 100" className={className}>
-      <g stroke={strokeColor} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" className="transition-colors duration-500">
+    <svg viewBox="0 0 240 100" className={className} xmlns="http://www.w3.org/2000/svg">
+      <g className="transition-colors duration-500" transform="translate(5, 5)">
         {/* Slanted Line */}
-        <line x1="25" y1="20" x2="33" y2="85" />
+        <path d="M 15 25 L 22 80" stroke={lineColor} strokeWidth="3.5" strokeLinecap="round" />
         
         {/* Magenta Wing */}
-        <path d="M 40,25 L 85,15 L 80,75 L 42,62 Z" fill="#D12A6A" />
-        
-        {/* Cyan Piece */}
-        <path d="M 42,62 L 65,70 L 55,78 L 36,68 Z" fill="#00B9DE" /> 
+        <polygon points="30,35 75,15 70,65 30,75" fill="#C2185B" />
         
         {/* Orange Piece */}
-        <path d="M 55,78 L 65,70 L 85,82 L 60,95 L 45,86 Z" fill="#F39200" />
+        <polygon points="32,74 55,85 35,95 20,85" fill="#F57C00" />
+
+        {/* Cyan Piece */}
+        <polygon points="32,68 50,78 45,84 27,74" fill="#00B0FF" />
       </g>
+      
       {/* Text Lab Livre */}
-      <text x="110" y="45" fontFamily='"Space Grotesk", "Michroma", "Orbitron", system-ui, sans-serif' fontSize="32" fontWeight="400" fill={textColor} letterSpacing="1" className="transition-colors duration-500">Lab</text>
-      <text x="110" y="85" fontFamily='"Space Grotesk", "Michroma", "Orbitron", system-ui, sans-serif' fontSize="32" fontWeight="400" fill={textColor} letterSpacing="1" className="transition-colors duration-500">Livre</text>
+      {/* Usando path tracejado ou fonte com aparência similar ao logo */}
+      <g fill={textColor} fontFamily='"Orbitron", "Space Grotesk", sans-serif' fontWeight="400" className="transition-colors duration-500">
+        <text x="100" y="48" fontSize="38" letterSpacing="0">Lab</text>
+        <text x="100" y="88" fontSize="38" letterSpacing="0">Livre</text>
+      </g>
     </svg>
   );
 }
