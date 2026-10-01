@@ -15,8 +15,8 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_ID: str = "your_google_client_id.apps.googleusercontent.com"
     GOOGLE_MAPS_API_KEY: Optional[str] = None
     
-    GEOFENCING_LAT: float = -23.550520
-    GEOFENCING_LNG: float = -46.633308
+    GEOFENCING_LAT: float = -15.98998
+    GEOFENCING_LNG: float = -48.04487
     GEOFENCING_RADIUS_METERS: int = 200
 
     GOOGLE_SHEET_ID: str = ""
