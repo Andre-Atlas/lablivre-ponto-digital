@@ -10,6 +10,7 @@ jobs:
     name: Build on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
@@ -45,10 +46,24 @@ jobs:
       - name: Rename and Compress Assets
         working-directory: desktop_app/dist
         run: |
+          echo "Conteudo do diretorio dist:"
+          ls -lR
+          
           if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
-            mv PontoDigital ../../PontoDigital-Linux
+            if [ -f PontoDigital ]; then
+              mv PontoDigital ../../PontoDigital-Linux
+            elif [ -f PontoDigital/PontoDigital ]; then
+              mv PontoDigital/PontoDigital ../../PontoDigital-Linux
+            fi
           elif [ "${{ matrix.os }}" = "windows-latest" ]; then
-            mv PontoDigital.exe ../../PontoDigital-Windows.exe
+            if [ -f PontoDigital.exe ]; then
+              mv PontoDigital.exe ../../PontoDigital-Windows.exe
+            elif [ -f PontoDigital/PontoDigital.exe ]; then
+              mv PontoDigital/PontoDigital.exe ../../PontoDigital-Windows.exe
+            else
+              echo "Executavel Windows nao encontrado!"
+              exit 1
+            fi
           elif [ "${{ matrix.os }}" = "macos-latest" ]; then
             tar -czf ../../PontoDigital-Mac.tar.gz PontoDigital.app
           fi
