@@ -3,9 +3,11 @@ from datetime import datetime
 from typing import Optional, List
 
 class CheckinRequest(BaseModel):
-    device_mac: str
+    device_mac: Optional[str] = None
     ssid: Optional[str] = None
-    bssids: List[str]
+    bssids: Optional[List[str]] = None
+    lat: Optional[float] = None
+    lng: Optional[float] = None
 
 class CheckinResponse(BaseModel):
     status_checkin: str

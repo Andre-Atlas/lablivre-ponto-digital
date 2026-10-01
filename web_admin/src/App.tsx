@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
+import { Checkin } from './pages/Checkin';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isDark, setIsDark] = useState(false); // Default to light mode
+  const [userType, setUserType] = useState<string | null>(null);
+  const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
     setIsAuthenticated(!!localStorage.getItem('token'));
-    // Read from localStorage if saved
+    setUserType(localStorage.getItem('userType'));
     const saved = localStorage.getItem('theme');
     if (saved === 'dark') {
       setIsDark(true);
@@ -27,16 +29,28 @@ function App() {
 
   const toggleTheme = () => setIsDark(!isDark);
 
-  const handleLogin = () => setIsAuthenticated(true);
+  const handleLogin = (tipo: string) => {
+    setIsAuthenticated(true);
+    setUserType(tipo);
+    localStorage.setItem('userType', tipo);
+  };
   
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('userType');
     setIsAuthenticated(false);
+    setUserType(null);
   };
 
-  return isAuthenticated 
-    ? <Dashboard onLogout={handleLogout} isDark={isDark} toggleTheme={toggleTheme} /> 
-    : <Login onLogin={handleLogin} isDark={isDark} toggleTheme={toggleTheme} />;
+  if (!isAuthenticated) {
+    return <Login onLogin={handleLogin} isDark={isDark} toggleTheme={toggleTheme} />;
+  }
+
+  if (userType === 'ADMIN') {
+    return <Dashboard onLogout={handleLogout} isDark={isDark} toggleTheme={toggleTheme} />;
+  }
+
+  return <Checkin onLogout={handleLogout} isDark={isDark} toggleTheme={toggleTheme} />;
 }
 
 export default App;

@@ -22,9 +22,19 @@ def haversine(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
 
 class GeolocationServiceImpl(GeolocationService):
     async def validar_localizacao(
-        self, bssids: List[str], lat_centro: float, lng_centro: float, raio_metros: int
+        self, bssids: List[str], lat_centro: float, lng_centro: float, raio_metros: int,
+        lat_user: float = None, lng_user: float = None
     ) -> Tuple[bool, float]:
         
+        if lat_user is not None and lng_user is not None:
+            dist = haversine(lat_centro, lng_centro, lat_user, lng_user)
+            # Add a small buffer for GPS accuracy if needed, for now we just use the distance directly.
+            # Usually browser accuracy is 10-20m.
+            if dist <= (raio_metros + 20): 
+                return True, dist
+            else:
+                return False, dist
+
         # If no BSSIDs are provided, we can't triangulate
         if not bssids:
             return False, float('inf')
@@ -33,8 +43,6 @@ class GeolocationServiceImpl(GeolocationService):
         if "00:11:22:33:44:55" in bssids:
             return True, 0.0
             
-        api_key = settings.GOOGLE_CLIENT_ID # Or ideally a dedicated MAPS_API_KEY. For now using what we have, but let's assume there's a GOOGLE_MAPS_API_KEY in settings or env.
-        # Actually, let's look for GOOGLE_MAPS_API_KEY in settings, or fallback to True if it's missing (to avoid breaking the user if they don't have an API key yet)
         if not getattr(settings, 'GOOGLE_MAPS_API_KEY', None):
             print("AVISO: GOOGLE_MAPS_API_KEY não configurada. Simulando presença para fins de desenvolvimento.")
             return True, 0.0
@@ -51,13 +59,12 @@ class GeolocationServiceImpl(GeolocationService):
                 response = await client.post(url, json=payload, timeout=5.0)
                 if response.status_code == 200:
                     data = response.json()
-                    lat_user = data["location"]["lat"]
-                    lng_user = data["location"]["lng"]
+                    lat_api = data["location"]["lat"]
+                    lng_api = data["location"]["lng"]
                     accuracy = data["accuracy"] # in meters
                     
-                    dist = haversine(lat_centro, lng_centro, lat_user, lng_user)
+                    dist = haversine(lat_centro, lng_centro, lat_api, lng_api)
                     
-                    # If distance minus accuracy is within the radius, we consider it valid
                     if (dist - accuracy) <= raio_metros:
                         return True, dist
                     else:

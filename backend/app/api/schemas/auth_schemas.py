@@ -20,3 +20,14 @@ class OnboardingResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user_id: UUID
+
+class RegisterRequest(BaseModel):
+    nome: str
+    email: str
+    senha: str
+    turma: str
+    numero_maquina: int
+
+class LoginRequest(BaseModel):
+    email: str
+    senha: str

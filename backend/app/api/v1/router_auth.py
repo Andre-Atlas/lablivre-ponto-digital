@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.api.schemas.auth_schemas import OnboardingRequest, OnboardingResponse
+from app.api.schemas.auth_schemas import OnboardingRequest, OnboardingResponse, RegisterRequest, LoginRequest
 from app.application.onboarding_use_case import OnboardingUseCase
 from app.domain.exceptions import EmailDuplicadoError, PatrimonioObrigatorioError
 from app.adapters.persistence.user_repo_impl import UserRepositoryImpl
@@ -28,7 +28,6 @@ async def onboarding(request: OnboardingRequest, db: AsyncSession = Depends(get_
             user_id=user.id
         )
         
-        # Retorna 201 se foi criado agora, ou 200 se já existia
         return JSONResponse(status_code=201 if is_new else 200, content=resp_data.model_dump(mode='json'))
         
     except EmailDuplicadoError as e:
@@ -50,24 +49,62 @@ from pydantic import BaseModel
 from app.domain.enums import TipoUsuario, RoleAdmin
 from app.adapters.auth.jwt_handler import create_access_token
 
-from app.adapters.persistence.orm_models import User as UserORM
+from app.adapters.persistence.orm_models import User as UserORM, Device as DeviceORM
 from sqlalchemy.future import select
-from app.utils.security import verify_password
+from app.utils.security import verify_password, get_password_hash
+import uuid
+from datetime import datetime, timezone
 
-class AdminLoginRequest(BaseModel):
-    email: str
-    password: str
-
-@router.post("/admin-login")
-async def admin_login(request: AdminLoginRequest, db: AsyncSession = Depends(get_db)):
+@router.post("/login")
+async def login(request: LoginRequest, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(UserORM).where(UserORM.email == request.email))
     user = result.scalars().first()
     
-    if not user or user.role not in [RoleAdmin.SUPER_ADMIN, RoleAdmin.ADMIN]:
-        raise HTTPException(status_code=403, detail="Acesso negado: apenas administradores")
+    if not user:
+        raise HTTPException(status_code=401, detail="Usuário não encontrado")
         
-    if not user.senha_hash or not verify_password(request.password, user.senha_hash):
+    if not user.senha_hash or not verify_password(request.senha, user.senha_hash):
         raise HTTPException(status_code=401, detail="Senha incorreta")
         
+    if not user.ativo:
+        raise HTTPException(status_code=403, detail="Usuário inativo")
+        
+    # Podemos deixar o front rotear pelo tipo. (ALUNO, STAFF, ADMIN)
     token = create_access_token(data={"sub": str(user.id), "tipo": user.tipo.value})
-    return {"access_token": token, "user_id": user.id}
+    return {"access_token": token, "user_id": user.id, "tipo": user.tipo.value}
+
+@router.post("/register")
+async def register(request: RegisterRequest, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(UserORM).where(UserORM.email == request.email))
+    if result.scalars().first():
+        raise HTTPException(status_code=400, detail="E-mail já cadastrado")
+        
+    new_user = UserORM(
+        id=uuid.uuid4(),
+        nome=request.nome,
+        email=request.email,
+        tipo=TipoUsuario.ALUNO,
+        turma_ou_equipe=request.turma,
+        patrimonio=str(request.numero_maquina),
+        ativo=True,
+        admin_aprovado=False, # Precisa de aprovação? Depende da sua regra. Deixaremos False por segurança
+        criado_em=datetime.now(timezone.utc),
+        role=RoleAdmin.NONE,
+        senha_hash=get_password_hash(request.senha)
+    )
+    db.add(new_user)
+    
+    # Criar um Device Virtual para web
+    new_device = DeviceORM(
+        id=uuid.uuid4(),
+        user_id=new_user.id,
+        mac_address="web_browser",
+        os_type="web",
+        registrado_em=datetime.now(timezone.utc),
+        ultimo_visto=datetime.now(timezone.utc),
+        aprovado=True
+    )
+    db.add(new_device)
+    
+    await db.commit()
+    return {"message": "Cadastro realizado com sucesso", "user_id": new_user.id}
