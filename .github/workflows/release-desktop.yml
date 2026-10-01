@@ -1,0 +1,65 @@
+name: Build and Release Desktop App
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+          - os: windows-latest
+          - os: macos-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flet
+          if [ -f desktop_app/requirements.txt ]; then pip install -r desktop_app/requirements.txt; fi
+        shell: bash
+
+      - name: Install Linux Dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get update && sudo apt-get install -y libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgstreamer-plugins-bad1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav gstreamer1.0-tools gstreamer1.0-x gstreamer1.0-alsa gstreamer1.0-gl gstreamer1.0-gtk3 gstreamer1.0-qt5 gstreamer1.0-pulseaudio
+
+      - name: Build with Flet
+        working-directory: desktop_app
+        run: |
+          flet pack main.py --name "PontoDigital"
+        shell: bash
+
+      - name: Rename and Compress Assets
+        working-directory: desktop_app/dist
+        run: |
+          if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
+            mv PontoDigital ../../PontoDigital-Linux
+          elif [ "${{ matrix.os }}" = "windows-latest" ]; then
+            mv PontoDigital.exe ../../PontoDigital-Windows.exe
+          elif [ "${{ matrix.os }}" = "macos-latest" ]; then
+            tar -czf ../../PontoDigital-Mac.tar.gz PontoDigital.app
+          fi
+        shell: bash
+
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            PontoDigital-Linux
+            PontoDigital-Windows.exe
+            PontoDigital-Mac.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
