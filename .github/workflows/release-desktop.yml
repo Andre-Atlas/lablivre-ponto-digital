@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build on ${{ matrix.os }}
@@ -46,9 +49,6 @@ jobs:
       - name: Rename and Compress Assets
         working-directory: desktop_app/dist
         run: |
-          echo "Conteudo do diretorio dist:"
-          ls -lR
-          
           if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
             if [ -f PontoDigital ]; then
               mv PontoDigital ../../PontoDigital-Linux
@@ -72,9 +72,6 @@ jobs:
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            PontoDigital-Linux
-            PontoDigital-Windows.exe
-            PontoDigital-Mac.tar.gz
+          files: PontoDigital-*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
