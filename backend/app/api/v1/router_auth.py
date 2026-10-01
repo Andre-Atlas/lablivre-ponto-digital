@@ -100,11 +100,9 @@ async def register(request: RegisterRequest, db: AsyncSession = Depends(get_db))
     new_device = DeviceORM(
         id=uuid.uuid4(),
         user_id=new_user.id,
-        mac_address="web_browser",
+        mac_address=f"web_{uuid.uuid4().hex[:13]}",
         os_type="web",
-        registrado_em=datetime.now(timezone.utc),
-        ultimo_visto=datetime.now(timezone.utc),
-        aprovado=True
+        registrado_em=datetime.now(timezone.utc)
     )
     db.add(new_device)
     
