@@ -92,7 +92,9 @@ async def register(request: RegisterRequest, db: AsyncSession = Depends(get_db))
         admin_aprovado=False, # Precisa de aprovação? Depende da sua regra. Deixaremos False por segurança
         criado_em=datetime.now(timezone.utc),
         role=RoleAdmin.NONE,
-        senha_hash=get_password_hash(request.senha)
+        senha_hash=get_password_hash(request.senha),
+        oauth_provider="local",
+        oauth_sub=""
     )
     db.add(new_user)
     
