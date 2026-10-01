@@ -28,7 +28,7 @@ export function Login({ onLogin, isDark, toggleTheme }: { onLogin: () => void, i
   };
 
   return (
-    <div className="min-h-[100dvh] flex text-slate-900 dark:text-white relative overflow-hidden bg-[#F0F2F5] dark:bg-[#0A0A0A] font-sans transition-colors duration-500">
+    <div className="min-h-[100dvh] flex flex-col lg:flex-row text-slate-900 dark:text-white relative overflow-x-hidden overflow-y-auto lg:overflow-hidden bg-[#F0F2F5] dark:bg-[#0A0A0A] font-sans transition-colors duration-500">
       
       {/* Absolute Theme Toggle at top right */}
       <div className="absolute top-6 right-6 sm:top-8 sm:right-8 z-50">
@@ -41,18 +41,18 @@ export function Login({ onLogin, isDark, toggleTheme }: { onLogin: () => void, i
       <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] dark:opacity-20 mix-blend-overlay pointer-events-none transition-opacity duration-500"></div>
 
       {/* Brand Context (Left) */}
-      <div className="hidden lg:flex flex-1 flex-col justify-center px-24 relative z-10 selection:bg-[#D12A6A] selection:text-white">
-        <div className="max-w-xl">
-          <LabLivreLogo className="w-64 mb-12 drop-shadow-xl" />
+      <div className="w-full lg:flex-1 flex flex-col justify-center px-6 sm:px-12 lg:px-24 pt-16 lg:pt-0 pb-8 lg:pb-0 relative z-10 selection:bg-[#D12A6A] selection:text-white">
+        <div className="max-w-xl mx-auto lg:mx-0 w-full text-center lg:text-left">
+          <LabLivreLogo className="w-48 sm:w-56 lg:w-64 mb-8 lg:mb-12 mx-auto lg:mx-0 drop-shadow-xl" />
           
-          <h1 className="text-5xl md:text-6xl tracking-tighter leading-[1.1] mb-8 font-medium">
-            O hub central de<br/>
+          <h1 className="text-4xl sm:text-5xl md:text-6xl tracking-tighter leading-[1.1] mb-6 lg:mb-8 font-medium">
+            O hub central de<br className="hidden lg:block"/>
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D12A6A] to-[#F39200]">
               controle e acesso.
             </span>
           </h1>
           
-          <p className="text-lg text-slate-600 dark:text-white/50 font-light leading-relaxed max-w-[45ch] transition-colors duration-500">
+          <p className="text-base sm:text-lg text-slate-600 dark:text-white/50 font-light leading-relaxed max-w-[45ch] mx-auto lg:mx-0 transition-colors duration-500 mb-8 lg:mb-12">
             Gerencie credenciais, aprove novos colaboradores e monitore o fluxo de ponto do Lab Livre em tempo real.
           </p>
 
@@ -90,7 +90,7 @@ export function Login({ onLogin, isDark, toggleTheme }: { onLogin: () => void, i
       </div>
 
       {/* Login Interface (Right) */}
-      <div className="flex-1 flex items-center justify-center p-6 sm:p-12 relative z-10">
+      <div className="w-full lg:flex-1 flex items-center justify-center p-6 sm:p-12 pb-16 lg:py-0 relative z-10">
         <div className="w-full max-w-md">
           
           {/* Glass Card with Physical Refraction (Impeccable Specs) */}
