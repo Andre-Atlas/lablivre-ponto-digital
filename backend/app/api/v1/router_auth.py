@@ -69,9 +69,11 @@ async def login(request: LoginRequest, db: AsyncSession = Depends(get_db)):
     if not user.ativo:
         raise HTTPException(status_code=403, detail="Usuário inativo")
         
-    # Podemos deixar o front rotear pelo tipo. (ALUNO, STAFF, ADMIN)
-    token = create_access_token(data={"sub": str(user.id), "tipo": user.tipo.value})
-    return {"access_token": token, "user_id": user.id, "tipo": user.tipo.value}
+    is_admin = user.role in [RoleAdmin.SUPER_ADMIN, RoleAdmin.ADMIN]
+    tipo_resposta = "ADMIN" if is_admin else user.tipo.value
+    
+    token = create_access_token(data={"sub": str(user.id), "tipo": tipo_resposta, "role": user.role.value if user.role else RoleAdmin.NONE.value})
+    return {"access_token": token, "user_id": user.id, "tipo": tipo_resposta}
 
 @router.post("/register")
 async def register(request: RegisterRequest, db: AsyncSession = Depends(get_db)):

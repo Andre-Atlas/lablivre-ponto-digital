@@ -197,7 +197,6 @@ export function Login({ onLogin, isDark, toggleTheme }: { onLogin: (tipo: string
                         <option value="" disabled className="dark:bg-slate-900">Selecione</option>
                         <option value="Turma 1" className="dark:bg-slate-900">Turma 1</option>
                         <option value="Turma 2" className="dark:bg-slate-900">Turma 2</option>
-                        <option value="Staff" className="dark:bg-slate-900">Staff</option>
                       </select>
                     </div>
                   </div>
