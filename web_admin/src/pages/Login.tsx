@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Mail, Lock, ChevronRight, Eye, EyeOff, User, Users, Monitor } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { LabLivreLogo } from '../components/LabLivreLogo';
 import { API_URL } from '../services/api';
 import { ThemeToggle } from '../components/ThemeToggle';
@@ -94,6 +95,26 @@ export function Login({ onLogin, isDark, toggleTheme }: { onLogin: (tipo: string
           <p className="text-base sm:text-lg text-slate-600 dark:text-white/50 font-light leading-relaxed max-w-[45ch] mx-auto lg:mx-0 transition-colors duration-500 mb-8 lg:mb-12">
             Gerencie credenciais, realize seu check-in e monitore o fluxo de ponto do Lab Livre em tempo real.
           </p>
+
+          <div className="hidden lg:flex items-center justify-center lg:justify-start gap-5">
+            <div className="p-3 bg-white dark:bg-white/5 rounded-2xl shadow-sm border border-slate-200 dark:border-white/10 transition-colors duration-500">
+              <QRCodeSVG 
+                value={typeof window !== 'undefined' ? window.location.href : 'https://ponto-digital-admin.pages.dev'} 
+                size={86}
+                bgColor="transparent"
+                fgColor="currentColor"
+                className="text-slate-900 dark:text-white transition-colors duration-500"
+              />
+            </div>
+            <div className="text-sm text-left">
+              <p className="font-medium text-slate-700 dark:text-white/80 mb-1 transition-colors duration-500">
+                Acesse pelo celular
+              </p>
+              <p className="text-slate-500 dark:text-white/40 font-light leading-relaxed transition-colors duration-500">
+                Escaneie o QR Code para acessar <br/>a plataforma no seu dispositivo.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
