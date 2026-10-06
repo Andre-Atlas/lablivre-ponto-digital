@@ -169,13 +169,26 @@ async def export_checkins(
     format: Optional[str] = "csv",
     ano: Optional[int] = None,
     mes: Optional[int] = None,
+    dia: Optional[int] = None,
+    turma: Optional[str] = None,
+    turno: Optional[str] = None,
     db: AsyncSession = Depends(get_db), 
     admin: User = Depends(require_admin)
 ):
     query = select(CheckInModel, UserModel).join(UserModel, CheckInModel.user_id == UserModel.id)
     if tipo:
         query = query.where(UserModel.tipo == tipo)
-    
+    if turma:
+        query = query.where(UserModel.turma_ou_equipe.ilike(f"%{turma}%"))
+    if turno:
+        query = query.where(CheckInModel.turno_referencia.ilike(f"%{turno}%"))
+    if ano and mes and dia:
+        # Approximate filter in DB for the specific day (UTC boundaries might slightly shift, but it's okay for general query)
+        start_date = datetime(ano, mes, dia, tzinfo=timezone.utc)
+        end_date = start_date + timedelta(days=1)
+        query = query.where(CheckInModel.hora_checkin >= start_date, CheckInModel.hora_checkin < end_date)
+
+        
     now_utc = datetime.now(timezone.utc)
     target_year = ano if ano else now_utc.year
     target_month = mes if mes else now_utc.month
