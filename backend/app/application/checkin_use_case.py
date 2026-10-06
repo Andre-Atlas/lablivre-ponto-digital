@@ -71,8 +71,9 @@ class CheckinUseCase:
         now_local = datetime.now() 
         
         turno = identificar_turno(user.turma_ou_equipe, now_local)
-        if not turno and user.tipo == TipoUsuario.ALUNO:
-            raise ForaTurnoError("Fora do horário de turno permitido")
+        # Desativado temporariamente:
+        # if not turno and user.tipo == TipoUsuario.ALUNO:
+        #     raise ForaTurnoError("Fora do horário de turno permitido")
 
         turno_ref = f"{now_local.strftime('%Y-%m-%d')}_{turno.turno.value}" if turno else f"{now_local.strftime('%Y-%m-%d')}_STAFF"
 
