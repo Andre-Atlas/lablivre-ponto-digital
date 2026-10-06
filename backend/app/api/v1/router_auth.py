@@ -110,3 +110,49 @@ async def register(request: RegisterRequest, db: AsyncSession = Depends(get_db))
     
     await db.commit()
     return {"message": "Cadastro realizado com sucesso", "user_id": new_user.id}
+
+from app.api.middleware.auth_dependencies import get_current_user
+from pydantic import BaseModel
+from app.utils.security import verify_password
+
+class UpdateNomeRequest(BaseModel):
+    nome: str
+
+@router.put("/me")
+async def update_nome(
+    request: UpdateNomeRequest,
+    user_payload: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    user_id = user_payload["sub"]
+    result = await db.execute(select(UserORM).where(UserORM.id == user_id))
+    user = result.scalars().first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    
+    user.nome = request.nome
+    await db.commit()
+    return {"message": "Nome atualizado com sucesso", "nome": user.nome}
+
+class UpdateSenhaRequest(BaseModel):
+    senha_atual: str
+    nova_senha: str
+
+@router.put("/me/senha")
+async def update_senha(
+    request: UpdateSenhaRequest,
+    user_payload: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    user_id = user_payload["sub"]
+    result = await db.execute(select(UserORM).where(UserORM.id == user_id))
+    user = result.scalars().first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    
+    if not user.senha_hash or not verify_password(request.senha_atual, user.senha_hash):
+        raise HTTPException(status_code=401, detail="Senha atual incorreta")
+        
+    user.senha_hash = get_password_hash(request.nova_senha)
+    await db.commit()
+    return {"message": "Senha atualizada com sucesso"}
