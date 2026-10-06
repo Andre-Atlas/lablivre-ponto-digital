@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Users, CheckCircle, Search, LogOut, Activity, Trash2, Plus, Download, Eye, EyeOff, Calendar, GraduationCap, Briefcase } from 'lucide-react';
+import { Users, CheckCircle, Search, LogOut, Activity, Trash2, Plus, Download, Eye, EyeOff, Calendar, GraduationCap, Briefcase , CheckSquare, Edit3 } from 'lucide-react';
 import type { User } from '../services/api';
 import { API_URL, fetchUsers, approveUser, deleteUser, createAdmin, updateRole, justificarFalta } from '../services/api';
 import { LabLivreLogo } from '../components/LabLivreLogo';
@@ -16,6 +16,8 @@ export function Dashboard({ onLogout, isDark, toggleTheme }: { onLogout: () => v
   const [newAdmin, setNewAdmin] = useState({ nome: '', email: '', senha: '', role: 'STAFF' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [selectedUsers, setSelectedUsers] = useState<Set<any>>(new Set());
+  const [showEditUser, setShowEditUser] = useState<any>(null);
 
   const loadUsers = async () => {
     try {
@@ -91,6 +93,54 @@ const confirmApprove = async () => {
   };
 
   
+  
+  const handleBulkAprovar = async () => {
+    if (selectedUsers.size === 0) return;
+    setIsSubmitting(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/api/v1/admin/usuarios/bulk-aprovar`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_ids: Array.from(selectedUsers) })
+      });
+      if (!res.ok) throw new Error('Falha ao aprovar');
+      fetchUsers();
+      setSelectedUsers(new Set());
+    } catch (e) {
+      console.error(e);
+      alert('Erro ao aprovar usuários');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleEditUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!showEditUser) return;
+    setIsSubmitting(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/api/v1/admin/usuarios/${showEditUser.id}`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          turma_ou_equipe: showEditUser.turma_ou_equipe,
+          patrimonio: showEditUser.patrimonio,
+          tipo: showEditUser.tipo
+        })
+      });
+      if (!res.ok) throw new Error('Falha ao editar');
+      fetchUsers();
+      setShowEditUser(null);
+    } catch (e) {
+      console.error(e);
+      alert('Erro ao editar usuário');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleJustificar = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!showJustificar.userId || !showJustificar.data) return;
@@ -265,9 +315,29 @@ const confirmApprove = async () => {
               <p className="text-slate-500 dark:text-white/40 font-light text-sm transition-colors">Não há colaboradores correspondentes à sua busca.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+
+        {selectedUsers.size > 0 && (
+          <div className="mb-6 p-4 bg-[#00B9DE]/10 border border-[#00B9DE]/20 rounded-2xl flex items-center justify-between">
+            <span className="text-sm font-medium text-[#00B9DE] flex items-center gap-2">
+              <CheckSquare size={18} /> {selectedUsers.size} usuários selecionados
+            </span>
+            <div className="flex gap-3">
+              <button onClick={handleBulkAprovar} className="px-4 py-2 bg-[#00B9DE] text-white text-xs font-semibold rounded-xl hover:bg-[#009bb8] transition">Autorizar Selecionados</button>
+              <button onClick={() => setShowJustificar({ visible: true, userId: null, userName: '', data: '', turno: 'MANHA' })} className="px-4 py-2 bg-emerald-500 text-white text-xs font-semibold rounded-xl hover:bg-emerald-600 transition">Justificar Selecionados</button>
+            </div>
+          </div>
+        )}
+
+        <div className="overflow-x-auto">
               <table className="w-full text-left whitespace-nowrap">
-                <thead className="border-b border-slate-200 dark:border-white/[0.05] bg-white/50 dark:bg-white/[0.01] transition-colors">
+                <th className="w-10 px-8 py-5">
+                      <input type="checkbox" onChange={(e) => {
+                        if (e.target.checked) setSelectedUsers(new Set(filteredUsers.map(u => u.id)));
+                        else setSelectedUsers(new Set());
+                      }} checked={selectedUsers.size > 0 && selectedUsers.size === filteredUsers.length} className="rounded border-slate-300" />
+                    </th>
+                    <thead className="border-b border-slate-200 dark:border-white/[0.05] bg-white/50 dark:bg-white/[0.01] transition-colors">
                   <tr>
                     <th className="px-8 py-5 text-[10px] font-medium text-slate-500 dark:text-white/30 uppercase tracking-[0.15em] transition-colors">Colaborador</th>
                     <th className="px-8 py-5 text-[10px] font-medium text-slate-500 dark:text-white/30 uppercase tracking-[0.15em] transition-colors">Função</th>
@@ -278,7 +348,7 @@ const confirmApprove = async () => {
                 <tbody className="divide-y divide-slate-100 dark:divide-white/[0.03] transition-colors">
                   {filteredUsers.map(user => (
                     <tr key={user.id} className="hover:bg-white dark:hover:bg-white/[0.02] transition-colors group">
-                      <td className="px-8 py-5">
+                      <td className="px-8 py-5 border-b border-slate-200/50 dark:border-white/[0.05]"><input type="checkbox" checked={selectedUsers.has(user.id)} onChange={(e) => { const newSet = new Set(selectedUsers); if (e.target.checked) newSet.add(user.id); else newSet.delete(user.id); setSelectedUsers(newSet); }} className="rounded border-slate-300" /></td><td className="px-8 py-5">
                         <div className="font-medium text-slate-900 dark:text-white/90 text-sm mb-0.5 transition-colors">{user.nome}</div>
                         <div className="text-slate-500 dark:text-white/40 text-xs font-light transition-colors">{user.email}</div>
                       </td>
@@ -328,7 +398,11 @@ const confirmApprove = async () => {
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m16 16 4-4-4-4"/><path d="M20 12H4"/></svg>
                         </button>
 )}
-<button 
+
+                          <button onClick={() => setShowEditUser(user)} className="text-slate-400 hover:text-blue-500 dark:text-white/20 dark:hover:text-blue-400 transition-colors" title="Editar Usuário">
+                            <Edit3 size={16} />
+                          </button>
+                          <button 
                             onClick={() => handleDelete(user.id)}
                             className="text-slate-400 hover:text-red-500 dark:text-white/20 dark:hover:text-red-400 transition-colors"
                             title="Excluir Usuário"
@@ -342,7 +416,7 @@ const confirmApprove = async () => {
                 </tbody>
               </table>
             </div>
-          )}
+          </>)}
         </div>
       </main>
 
@@ -439,6 +513,38 @@ const confirmApprove = async () => {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      
+      {showEditUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm" onClick={() => setShowEditUser(null)}></div>
+          <div className="relative w-full max-w-sm bg-white dark:bg-[#0A0A0A] rounded-[2rem] p-8 z-10 border border-slate-200 dark:border-white/[0.08]">
+            <h3 className="text-xl font-medium mb-4 dark:text-white">Editar Usuário</h3>
+            <form onSubmit={handleEditUser} className="space-y-4">
+              <div>
+                <label className="block text-[10px] uppercase tracking-widest text-slate-500 dark:text-white/40 mb-1.5">Turma</label>
+                <input value={showEditUser.turma_ou_equipe || ''} onChange={e => setShowEditUser({...showEditUser, turma_ou_equipe: e.target.value})} className="w-full bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] rounded-xl px-4 py-2 dark:text-white" />
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase tracking-widest text-slate-500 dark:text-white/40 mb-1.5">Máquina (Patrimônio)</label>
+                <input value={showEditUser.patrimonio || ''} onChange={e => setShowEditUser({...showEditUser, patrimonio: e.target.value})} className="w-full bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] rounded-xl px-4 py-2 dark:text-white" />
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase tracking-widest text-slate-500 dark:text-white/40 mb-1.5">Tipo</label>
+                <select value={showEditUser.tipo || 'ALUNO'} onChange={e => setShowEditUser({...showEditUser, tipo: e.target.value})} className="w-full bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] rounded-xl px-4 py-2 dark:text-white">
+                  <option value="ALUNO">Aluno</option>
+                  <option value="STAFF">Staff</option>
+                  <option value="ADMIN">Admin</option>
+                </select>
+              </div>
+              <div className="flex gap-3 mt-6">
+                <button type="button" onClick={() => setShowEditUser(null)} className="flex-1 py-2 bg-slate-100 dark:bg-white/[0.03] rounded-xl dark:text-white/70 text-xs font-semibold">Cancelar</button>
+                <button type="submit" disabled={isSubmitting} className="flex-1 py-2 bg-blue-500 text-white rounded-xl text-xs font-semibold">Salvar</button>
+              </div>
+            </form>
           </div>
         </div>
       )}
