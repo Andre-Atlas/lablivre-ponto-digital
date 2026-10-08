@@ -1,31 +1,90 @@
-# Ponto Digital (Residência)
+# Ponto Digital - LabLivre UnB
 
-Sistema completo de controle de ponto e gestão de presença, projetado para controle de check-in/check-out de residentes e staff.
+![Versão](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.103-009688?logo=fastapi&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-Compatible-326CE5?logo=kubernetes&logoColor=white)
 
-## 🚀 Visão Geral
+O **Ponto Digital Multiplataforma** é o sistema oficial de registro de frequência e gerência de horários desenvolvido para o LabLivre (UnB - Campus Gama). Ele permite que alunos e staff registrem entradas e saídas diárias, enquanto oferece um Painel Administrativo avançado para professores/supervisores gerenciarem equipes, aprovarem horas, baixarem planilhas e organizarem o laboratório físico.
 
-O **Ponto Digital** é composto por três frentes principais:
-1. **API Backend**: Motor de regras de negócio, autenticação e relatórios.
-2. **Web Dashboard (React)**: Painel administrativo para visualização de relatórios, gestão de usuários, exportação de planilhas e download de clientes.
-3. **Desktop App (Python/Flet)**: Cliente residente nas máquinas locais que roda em background (System Tray) para notificações e registro de ponto rápido.
+## 🚀 Funcionalidades
 
-## ✨ Novidades e Funcionalidades
+### Para os Usuários (Alunos / Staff)
+* **Check-in Dinâmico:** Registro fácil de chegada e saída do laboratório físico.
+* **Cálculo de Horas:** Acompanhamento transparente do saldo e carga horária já realizada.
+* **Perfil Interativo:** Edição autônoma de nome de exibição e troca segura de senha (auditoria e hash).
+* **UI Responsiva e Temática:** Adapta-se automaticamente a modo Claro/Escuro (Light/Dark Mode).
 
-- **Sistema de Permissões (Roles)**: Estrutura robusta baseada em cargos: `SUPER_ADMIN`, `ADMIN`, `STAFF` e `ALUNO`.
-- **Desktop App Autônomo**: Início automático com o sistema operacional, fixação na bandeja do sistema e pop-ups agendados para lembretes automáticos.
-- **Check-in via Dashboard**: Exclusivo para usuários com permissão `STAFF`.
-- **Exportação Inteligente para Excel**: Cálculo proativo de faltas em dias obrigatórios e integração de lógica com o status 'Justificado'.
-- **Distribuição de Clientes**: Links de download para Windows, macOS e Linux disponíveis diretamente na dashboard.
+### Para os Administradores
+* **Gestão de Controle:** Painel administrativo interativo para visualização em tempo real de quem está no LabLivre.
+* **Ações em Massa (Bulk Actions):** Autorização ou Justificativa de ponto de vários usuários com 1 único clique via Checkboxes.
+* **Exportação Avançada (Relatórios):** Geração de planilhas Excel e CSV customizadas (Filtráveis por: Data Específica, Turma/Equipe, Turno, Tipo de Usuário).
+* **Gestão de Usuários:** Edição de perfil de qualquer aluno (Turma, Número de Patrimônio da Máquina alocada, Nível de Acesso).
 
-## 📥 Download e Instalação
+---
 
-Os instaladores do **Desktop App** estão disponíveis na tela inicial do **Web Dashboard** ou através da seção [Releases](https://github.com/Andre-Atlas/lablivre-ponto-digital/releases) no GitHub.
-- **Windows**: Baixe o `.exe` e execute o instalador.
-- **macOS**: Baixe o `.dmg` ou `.app`.
-- **Linux**: Baixe o `.AppImage` ou executável Linux.
-*(A aplicação é atualizada via hotfixes disponibilizados nas releases oficiais).*
+## 🏗️ Estrutura do Repositório
 
-## 📖 Navegação da Documentação
+O repositório foi organizado em microsserviços para facilitar o deploy isolado:
 
-- [Arquitetura do Sistema](ARCHITECTURE.md)
-- [Changelog Historico](CHANGELOG.md)
+```text
+├── backend/       # API Backend (Python / FastAPI / SQLAlchemy Async)
+├── web_admin/     # Frontend Web e Painel Admin (React / Vite / Tailwind)
+├── k8s/           # Manifestos de Infraestrutura em Kubernetes (Pronto para Prod)
+├── docs/          # Arquivos de Documentação e Imagens de Referência
+├── scripts/       # Scripts utilitários de manutenção e migrações isoladas
+└── desktop_app/   # Cliente Windows/Linux legados para Pontos Físicos Locais
+```
+
+👉 **[Leia a Documentação de Arquitetura Completa Aqui (ARCHITECTURE.md)](docs/ARCHITECTURE.md)**
+
+---
+
+## 🛠️ Como Executar Localmente
+
+### Pré-requisitos
+* **Docker** e **Docker Compose** instalados.
+
+### 1. Preparando o Ambiente
+Crie um arquivo `.env` na pasta principal baseado nos requisitos:
+
+```ini
+DATABASE_URL=postgresql+asyncpg://seu_usuario:sua_senha@db:5432/ponto_digital
+JWT_SECRET_KEY=uma-chave-super-secreta-para-local
+ENVIRONMENT=development
+```
+*(Nota: O `docker-compose.yml` já configura variáveis locais, portanto o `.env` é apenas para substituir comportamentos, se desejado)*
+
+### 2. Subindo com o Docker Compose
+No terminal, rodando na pasta raiz do projeto:
+
+```bash
+docker-compose build
+docker-compose up -d
+```
+
+* **Frontend (Aplicação Web):** Estará disponível em `http://localhost:5173` (porta mapeada do contêiner para 8080 interno).
+* **Backend (Documentação Swagger):** Estará disponível em `http://localhost:8000/docs`.
+
+### 3. Criando o 1º Administrador
+Com os contêineres rodando, você pode usar um dos scripts da pasta `scripts/archive` para injetar o primeiro Super Admin diretamente no banco local, se não quiser criar pela tela e ir no banco alterar o cargo manualmente.
+
+---
+
+## 🌩️ Implantação Cloud Native (Produção)
+
+Este projeto não é "apenas local". A estrutura foi toda adaptada (Usuários não-root nos Dockerfiles, Gunicorn Multithreading, Ingress Rounting) para ambientes complexos.
+
+### Opção 1: Kubernetes (Cluster próprio ou EKS/GKE)
+Dentro do diretório `k8s/` estão todos os manifestos já preparados:
+1. Adicione a sua `DATABASE_URL` (recomendamos uso de Supabase ou Neon para bancos na nuvem) no arquivo `k8s/02-configmap-secrets.yaml`.
+2. Aplique a configuração: `kubectl apply -f k8s/`.
+
+### Opção 2: Vercel + Render
+A arquitetura de pastas também permite vincular o repositório diretamente:
+- **Vercel:** Aponte para a Root Directory `web_admin`.
+- **Render:** Crie um "Web Service" em Docker apontando para o subdiretório `backend/`.
+
+---
+**Equipe Responsável:** Andre Atlas / LabLivre UnB

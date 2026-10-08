@@ -1,0 +1,353 @@
+{
+  "total_count": 3,
+  "jobs": [
+    {
+      "id": 110526361278,
+      "run_id": 36908908762,
+      "workflow_name": "Build and Release Desktop App",
+      "head_branch": "v1.0.1",
+      "run_url": "https://api.github.com/repos/Andre-Atlas/lablivre-ponto-digital/actions/runs/36908908762",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOUr1mSM8AAAAZu-Juvg",
+      "head_sha": "6c686ae175015cdd78bf2fd9b85a90708fb3e22d",
+      "url": "https://api.github.com/repos/Andre-Atlas/lablivre-ponto-digital/actions/jobs/110526361278",
+      "html_url": "https://github.com/Andre-Atlas/lablivre-ponto-digital/actions/runs/36908908762/job/110526361278",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "created_at": "2026-10-01T18:43:07Z",
+      "started_at": "2026-10-01T18:43:17Z",
+      "completed_at": "2026-10-01T18:44:37Z",
+      "name": "Build on macos-latest",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-01T18:43:18Z",
+          "completed_at": "2026-10-01T18:43:20Z"
+        },
+        {
+          "name": "Check out repository",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-01T18:43:20Z",
+          "completed_at": "2026-10-01T18:43:22Z"
+        },
+        {
+          "name": "Set up Python",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-01T18:43:22Z",
+          "completed_at": "2026-10-01T18:43:22Z"
+        },
+        {
+          "name": "Install dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-01T18:43:22Z",
+          "completed_at": "2026-10-01T18:43:30Z"
+        },
+        {
+          "name": "Install Linux Dependencies",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 5,
+          "started_at": "2026-10-01T18:43:30Z",
+          "completed_at": "2026-10-01T18:43:30Z"
+        },
+        {
+          "name": "Build with Flet",
+          "status": "completed",
+          "conclusion": "cancelled",
+          "number": 6,
+          "started_at": "2026-10-01T18:43:30Z",
+          "completed_at": "2026-10-01T18:44:33Z"
+        },
+        {
+          "name": "Rename and Compress Assets",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 7,
+          "started_at": "2026-10-01T18:44:33Z",
+          "completed_at": "2026-10-01T18:44:33Z"
+        },
+        {
+          "name": "Upload Release Asset",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 8,
+          "started_at": "2026-10-01T18:44:33Z",
+          "completed_at": "2026-10-01T18:44:33Z"
+        },
+        {
+          "name": "Post Set up Python",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 15,
+          "started_at": "2026-10-01T18:44:33Z",
+          "completed_at": "2026-10-01T18:44:33Z"
+        },
+        {
+          "name": "Post Check out repository",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16,
+          "started_at": "2026-10-01T18:44:33Z",
+          "completed_at": "2026-10-01T18:44:33Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-10-01T18:44:33Z",
+          "completed_at": "2026-10-01T18:44:34Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/Andre-Atlas/lablivre-ponto-digital/check-runs/110526361278",
+      "labels": [
+        "macos-latest"
+      ],
+      "runner_id": 1000000055,
+      "runner_name": "GitHub Actions 1000000055",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 110526361680,
+      "run_id": 36908908762,
+      "workflow_name": "Build and Release Desktop App",
+      "head_branch": "v1.0.1",
+      "run_url": "https://api.github.com/repos/Andre-Atlas/lablivre-ponto-digital/actions/runs/36908908762",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOUr1mSM8AAAAZu-JwUA",
+      "head_sha": "6c686ae175015cdd78bf2fd9b85a90708fb3e22d",
+      "url": "https://api.github.com/repos/Andre-Atlas/lablivre-ponto-digital/actions/jobs/110526361680",
+      "html_url": "https://github.com/Andre-Atlas/lablivre-ponto-digital/actions/runs/36908908762/job/110526361680",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "created_at": "2026-10-01T18:43:07Z",
+      "started_at": "2026-10-01T18:43:10Z",
+      "completed_at": "2026-10-01T18:45:55Z",
+      "name": "Build on ubuntu-latest",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-01T18:43:11Z",
+          "completed_at": "2026-10-01T18:43:12Z"
+        },
+        {
+          "name": "Check out repository",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-01T18:43:12Z",
+          "completed_at": "2026-10-01T18:43:13Z"
+        },
+        {
+          "name": "Set up Python",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-01T18:43:13Z",
+          "completed_at": "2026-10-01T18:43:13Z"
+        },
+        {
+          "name": "Install dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-01T18:43:13Z",
+          "completed_at": "2026-10-01T18:43:20Z"
+        },
+        {
+          "name": "Install Linux Dependencies",
+          "status": "completed",
+          "conclusion": "cancelled",
+          "number": 5,
+          "started_at": "2026-10-01T18:43:20Z",
+          "completed_at": "2026-10-01T18:45:53Z"
+        },
+        {
+          "name": "Build with Flet",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 6,
+          "started_at": "2026-10-01T18:45:53Z",
+          "completed_at": "2026-10-01T18:45:53Z"
+        },
+        {
+          "name": "Rename and Compress Assets",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 7,
+          "started_at": "2026-10-01T18:45:53Z",
+          "completed_at": "2026-10-01T18:45:53Z"
+        },
+        {
+          "name": "Upload Release Asset",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 8,
+          "started_at": "2026-10-01T18:45:53Z",
+          "completed_at": "2026-10-01T18:45:53Z"
+        },
+        {
+          "name": "Post Set up Python",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 15,
+          "started_at": "2026-10-01T18:45:53Z",
+          "completed_at": "2026-10-01T18:45:53Z"
+        },
+        {
+          "name": "Post Check out repository",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16,
+          "started_at": "2026-10-01T18:45:53Z",
+          "completed_at": "2026-10-01T18:45:54Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-10-01T18:45:54Z",
+          "completed_at": "2026-10-01T18:45:54Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/Andre-Atlas/lablivre-ponto-digital/check-runs/110526361680",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000000056,
+      "runner_name": "GitHub Actions 1000000056",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 110526361830,
+      "run_id": 36908908762,
+      "workflow_name": "Build and Release Desktop App",
+      "head_branch": "v1.0.1",
+      "run_url": "https://api.github.com/repos/Andre-Atlas/lablivre-ponto-digital/actions/runs/36908908762",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOUr1mSM8AAAAZu-Jw5g",
+      "head_sha": "6c686ae175015cdd78bf2fd9b85a90708fb3e22d",
+      "url": "https://api.github.com/repos/Andre-Atlas/lablivre-ponto-digital/actions/jobs/110526361830",
+      "html_url": "https://github.com/Andre-Atlas/lablivre-ponto-digital/actions/runs/36908908762/job/110526361830",
+      "status": "completed",
+      "conclusion": "failure",
+      "created_at": "2026-10-01T18:43:07Z",
+      "started_at": "2026-10-01T18:43:10Z",
+      "completed_at": "2026-10-01T18:44:29Z",
+      "name": "Build on windows-latest",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-01T18:43:11Z",
+          "completed_at": "2026-10-01T18:43:12Z"
+        },
+        {
+          "name": "Check out repository",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-01T18:43:12Z",
+          "completed_at": "2026-10-01T18:43:18Z"
+        },
+        {
+          "name": "Set up Python",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-01T18:43:18Z",
+          "completed_at": "2026-10-01T18:43:18Z"
+        },
+        {
+          "name": "Install dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-01T18:43:18Z",
+          "completed_at": "2026-10-01T18:43:39Z"
+        },
+        {
+          "name": "Install Linux Dependencies",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 5,
+          "started_at": "2026-10-01T18:43:39Z",
+          "completed_at": "2026-10-01T18:43:39Z"
+        },
+        {
+          "name": "Build with Flet",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-10-01T18:43:39Z",
+          "completed_at": "2026-10-01T18:44:25Z"
+        },
+        {
+          "name": "Rename and Compress Assets",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-10-01T18:44:25Z",
+          "completed_at": "2026-10-01T18:44:25Z"
+        },
+        {
+          "name": "Upload Release Asset",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 8,
+          "started_at": "2026-10-01T18:44:25Z",
+          "completed_at": "2026-10-01T18:44:25Z"
+        },
+        {
+          "name": "Post Set up Python",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 15,
+          "started_at": "2026-10-01T18:44:25Z",
+          "completed_at": "2026-10-01T18:44:25Z"
+        },
+        {
+          "name": "Post Check out repository",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16,
+          "started_at": "2026-10-01T18:44:25Z",
+          "completed_at": "2026-10-01T18:44:27Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-10-01T18:44:27Z",
+          "completed_at": "2026-10-01T18:44:27Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/Andre-Atlas/lablivre-ponto-digital/check-runs/110526361830",
+      "labels": [
+        "windows-latest"
+      ],
+      "runner_id": 1000000054,
+      "runner_name": "GitHub Actions 1000000054",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    }
+  ]
+}
