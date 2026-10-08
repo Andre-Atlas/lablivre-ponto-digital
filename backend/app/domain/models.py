@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from __future__ import annotations
+
 """Entidades de domínio puras do Ponto Digital.
 
 Todas as entidades são dataclasses sem dependência de ORM ou frameworks.

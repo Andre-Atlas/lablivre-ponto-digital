@@ -5,7 +5,7 @@ import os
 from app.config import settings
 DATABASE_URL = settings.DATABASE_URL or "sqlite+aiosqlite:///./ponto_digital.db"
 
-connect_args = {}
+connect_args: dict = {}
 if "sqlite" in DATABASE_URL:
     connect_args["check_same_thread"] = False
 elif "asyncpg" in DATABASE_URL:

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from enum import Enum
 
 class TipoUsuario(str, Enum):
@@ -7,6 +9,8 @@ class TipoUsuario(str, Enum):
 class StatusCheckin(str, Enum):
     PRESENTE = "PRESENTE"
     ATRASADO = "ATRASADO"
+    FALTA = "FALTA"
+    JUSTIFICADO = "JUSTIFICADO"
 
 class RoleAdmin(str, Enum):
     SUPER_ADMIN = "SUPER_ADMIN"

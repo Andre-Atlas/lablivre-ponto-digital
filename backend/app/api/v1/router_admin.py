@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import calendar
 import csv
 import io
 import uuid
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 import openpyxl
@@ -13,7 +15,7 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.adapters.persistence.database import get_db
-from app.adapters.persistence.orm_models import CheckIn as CheckInModel
+from app.adapters.persistence.orm_models import Checkin as CheckInModel
 from app.adapters.persistence.orm_models import Device as DeviceModel
 from app.adapters.persistence.orm_models import User as UserModel
 from app.api.middleware.auth_dependencies import get_current_user
@@ -103,7 +105,7 @@ async def create_admin(
         email=request.email,
         nome=request.nome,
         tipo=TipoUsuario.STAFF,
-        role=RoleAdmin(request.role.upper()) if request.role else RoleAdmin.STAFF,
+        role=RoleAdmin(request.role.upper()) if request.role else RoleAdmin.NONE,
         turma_ou_equipe="Administração",
         oauth_provider="manual",
         oauth_sub=f"manual_{uuid.uuid4()}",
@@ -141,20 +143,20 @@ async def export_usuarios(db: AsyncSession = Depends(get_db), admin: User = Depe
     result = await db.execute(select(UserModel))
     users = result.scalars().all()
 
-    output = io.StringIO()
-    writer = csv.writer(output)
+    output_csv = io.StringIO()
+    writer = csv.writer(output_csv)
     writer.writerow(["ID", "Nome", "Email", "Tipo", "Aprovado", "Turma", "Máquina", "Criado Em"])
 
     for u in users:
         writer.writerow([
             str(u.id), u.nome, u.email, u.tipo.value if u.tipo else "",
             "Sim" if u.admin_aprovado else "Nao", u.turma_ou_equipe or "", u.patrimonio or "",
-            u.criado_em.replace(tzinfo=UTC).astimezone(timezone(timedelta(hours=-3))).strftime("%Y-%m-%d %H:%M:%S") if u.criado_em else ""
+            u.criado_em.replace(tzinfo=timezone.utc).astimezone(timezone(timedelta(hours=-3))).strftime("%Y-%m-%d %H:%M:%S") if u.criado_em else ""
         ])
 
-    output.seek(0)
+    output_csv.seek(0)
     return StreamingResponse(
-        iter([output.getvalue()]),
+        iter([output_csv.getvalue()]),
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=usuarios_lablivre.csv"}
     )
@@ -184,12 +186,12 @@ async def export_checkins(
         query = query.where(CheckInModel.turno_referencia.ilike(f"%{turno}%"))
     if ano is not None and mes is not None and dia is not None:
         # Approximate filter in DB for the specific day (UTC boundaries might slightly shift, but it's okay for general query)
-        start_date = datetime(ano, mes, dia, tzinfo=UTC)
+        start_date = datetime(ano, mes, dia, tzinfo=timezone.utc)
         end_date = start_date + timedelta(days=1)
         query = query.where(CheckInModel.hora_checkin >= start_date, CheckInModel.hora_checkin < end_date)
 
 
-    now_utc = datetime.now(UTC)
+    now_utc = datetime.now(timezone.utc)
     target_year = ano if ano else now_utc.year
     target_month = mes if mes else now_utc.month
 
@@ -207,7 +209,7 @@ async def export_checkins(
         ws_alunos.append(["Nome", "Email", "Turma", "Máquina", "Data/Hora", "Turno", "Status", "IP"])
 
         # Organize checkins by user and day/turno
-        checkins_by_user = {}
+        checkins_by_user: dict = {}
         for checkin, user in rows:
             if user.id not in checkins_by_user:
                 checkins_by_user[user.id] = []
@@ -235,7 +237,7 @@ async def export_checkins(
                     if checkin.hora_checkin.year == target_year and checkin.hora_checkin.month == target_month:
                         ws_staff.append([
                             user.nome, user.email, user.patrimonio or "",
-                            checkin.hora_checkin.replace(tzinfo=UTC).astimezone(timezone(timedelta(hours=-3))).strftime("%Y-%m-%d %H:%M:%S") if checkin.hora_checkin else "",
+                            checkin.hora_checkin.replace(tzinfo=timezone.utc).astimezone(timezone(timedelta(hours=-3))).strftime("%Y-%m-%d %H:%M:%S") if checkin.hora_checkin else "",
                             checkin.turno_referencia or "",
                             checkin.status.value if checkin.status else "",
                             checkin.ip_publico or ""
@@ -280,7 +282,7 @@ async def export_checkins(
                         if found_checkin:
                             ws_alunos.append([
                                 user.nome, user.email, user.turma_ou_equipe, user.patrimonio or "",
-                                found_checkin.hora_checkin.replace(tzinfo=UTC).astimezone(timezone(timedelta(hours=-3))).strftime("%Y-%m-%d %H:%M:%S") if found_checkin.hora_checkin else "",
+                                found_checkin.hora_checkin.replace(tzinfo=timezone.utc).astimezone(timezone(timedelta(hours=-3))).strftime("%Y-%m-%d %H:%M:%S") if found_checkin.hora_checkin else "",
                                 expected_ref,
                                 found_checkin.status.value if found_checkin.status else "",
                                 found_checkin.ip_publico or ""
@@ -295,33 +297,33 @@ async def export_checkins(
                                 ""
                             ])
 
-        output = io.BytesIO()
-        wb.save(output)
-        output.seek(0)
+        output_excel = io.BytesIO()
+        wb.save(output_excel)
+        output_excel.seek(0)
 
         return StreamingResponse(
-            output,
+            output_excel,
             media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             headers={"Content-Disposition": f"attachment; filename=checkins_lablivre_{target_year}_{target_month:02d}.xlsx"}
         )
     else:
         # Default CSV
-        output = io.StringIO()
-        writer = csv.writer(output)
+        output_csv = io.StringIO()
+        writer = csv.writer(output_csv)
         writer.writerow(["Nome", "Email", "Turma", "Máquina", "Data/Hora", "Turno", "Status", "IP"])
 
         for checkin, user in rows:
             writer.writerow([
                 user.nome, user.email, user.turma_ou_equipe or "", user.patrimonio or "",
-                checkin.hora_checkin.replace(tzinfo=UTC).astimezone(timezone(timedelta(hours=-3))).strftime("%Y-%m-%d %H:%M:%S") if checkin.hora_checkin else "",
+                checkin.hora_checkin.replace(tzinfo=timezone.utc).astimezone(timezone(timedelta(hours=-3))).strftime("%Y-%m-%d %H:%M:%S") if checkin.hora_checkin else "",
                 checkin.turno_referencia or "",
                 checkin.status.value if checkin.status else "",
                 checkin.ip_publico or ""
             ])
 
-        output.seek(0)
+        output_csv.seek(0)
         return StreamingResponse(
-            iter([output.getvalue()]),
+            iter([output_csv.getvalue()]),
             media_type="text/csv",
             headers={"Content-Disposition": "attachment; filename=checkins_lablivre.csv"}
         )
@@ -352,7 +354,7 @@ async def create_user_role(
     if not user:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
 
-    user.role = request.role
+    user.role = request.role  # type: ignore
     await db.commit()
     return {"status": "sucesso", "role": user.role}
 
@@ -381,7 +383,7 @@ async def justificar_falta(
 
     if checkin:
         # Update existing
-        checkin.status = StatusCheckin.JUSTIFICADO
+        checkin.status = StatusCheckin.JUSTIFICADO  # type: ignore
     else:
         # Create new dummy checkin for the justification
         # Get the user's first device or create a mock web device
@@ -407,7 +409,7 @@ async def justificar_falta(
         checkin = CheckInModel(
             user_id=user_id,
             device_id=dev.id,
-            hora_checkin=datetime.now(UTC), # Audit time
+            hora_checkin=datetime.now(timezone.utc), # Audit time
             status=StatusCheckin.JUSTIFICADO,
             turno_referencia=turno_ref,
             ip_publico="0.0.0.0"
@@ -472,7 +474,7 @@ async def bulk_justificar_faltas(
 ):
     turno_ref = f"{request.data}_{request.turno}"
     count = 0
-    now_utc = datetime.now(UTC)
+    now_utc = datetime.now(timezone.utc)
 
     for uid in request.user_ids:
         # Check if checkin already exists
@@ -525,7 +527,7 @@ async def admin_update_user(
     if request.patrimonio is not None:
         user.patrimonio = request.patrimonio
     if request.tipo is not None:
-        user.tipo = request.tipo
+        user.tipo = request.tipo  # type: ignore
 
     await db.commit()
     return {"message": "Usuário atualizado com sucesso"}
