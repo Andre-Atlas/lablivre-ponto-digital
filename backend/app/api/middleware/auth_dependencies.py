@@ -1,6 +1,7 @@
+from typing import Any
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from typing import Dict, Any
 
 from app.adapters.auth.jwt_handler import verify_access_token
 
@@ -8,7 +9,7 @@ from app.adapters.auth.jwt_handler import verify_access_token
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login")
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme)) -> Dict[str, Any]:
+async def get_current_user(token: str = Depends(oauth2_scheme)) -> dict[str, Any]:
     """
     Dependência que recupera e valida o usuário atual a partir do token JWT.
     """
@@ -22,7 +23,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> Dict[str, Any
     return payload
 
 
-async def get_current_admin(payload: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
+async def get_current_admin(payload: dict[str, Any] = Depends(get_current_user)) -> dict[str, Any]:
     """
     Dependência que garante que o usuário atual é um administrador, verificando a claim 'role'.
     """

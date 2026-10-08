@@ -1,12 +1,14 @@
-from uuid import uuid4
 from datetime import datetime
+from uuid import uuid4
+
 import pytest
+
 from app.domain.exceptions import (
-    ForaTurnoError,
-    ForaDoRaioError,
-    DuplicataError,
-    PatrimonioObrigatorioError,
     DomainError,
+    DuplicataError,
+    ForaDoRaioError,
+    ForaTurnoError,
+    PatrimonioObrigatorioError,
 )
 
 

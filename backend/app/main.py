@@ -1,15 +1,15 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
+from typing import Any
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.api.v1 import router_admin, router_auth, router_checkin
 from app.config import settings
-from app.api.v1 import router_auth
-from app.api.v1 import router_checkin
-from app.api.v1 import router_admin
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> Any:
     # Inicialização do banco de dados (se necessário)
     yield
     # Limpeza
@@ -32,5 +32,5 @@ app.include_router(router_admin.router, prefix="/api/v1")
 
 
 @app.get("/api/v1/health")
-async def health():
+async def health() -> Any:
     return {"status": "healthy", "version": settings.APP_VERSION}

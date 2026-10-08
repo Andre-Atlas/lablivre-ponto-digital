@@ -1,4 +1,5 @@
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from app.domain.enums import TipoUsuario, StatusCheckin, RoleAdmin
 from sqlalchemy import (
     String,
     Boolean,
@@ -22,21 +23,10 @@ class Base(DeclarativeBase):
     pass
 
 
-class TipoUsuario(str, enum.Enum):
-    ALUNO = "ALUNO"
-    STAFF = "STAFF"
 
 
-class StatusCheckin(str, enum.Enum):
-    PRESENTE = "PRESENTE"
-    ATRASADO = "ATRASADO"
 
 
-class RoleAdmin(str, enum.Enum):
-    SUPER_ADMIN = "SUPER_ADMIN"
-    ADMIN = "ADMIN"
-    VIEWER = "VIEWER"
-    NONE = "NONE"
 
 
 class User(Base):

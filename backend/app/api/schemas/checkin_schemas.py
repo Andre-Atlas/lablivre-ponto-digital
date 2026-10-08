@@ -1,14 +1,14 @@
-from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional, List
+
+from pydantic import BaseModel
 
 
 class CheckinRequest(BaseModel):
-    device_mac: Optional[str] = None
-    ssid: Optional[str] = None
-    bssids: Optional[List[str]] = None
-    lat: Optional[float] = None
-    lng: Optional[float] = None
+    device_mac: str | None = None
+    ssid: str | None = None
+    bssids: list[str] | None = None
+    lat: float | None = None
+    lng: float | None = None
 
 
 class CheckinResponse(BaseModel):

@@ -3,7 +3,6 @@ from __future__ import annotations
 """Interface de repositório de usuários."""
 
 from abc import ABC, abstractmethod
-from typing import Optional
 from uuid import UUID
 
 from ..enums import TipoUsuario

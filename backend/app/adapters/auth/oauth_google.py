@@ -1,7 +1,8 @@
 import httpx
+from typing import Any, cast
 
 
-async def verify_google_token(token: str) -> dict:
+async def verify_google_token(token: str) -> dict[str, Any]:
     """
     Verifica o token (Access Token) de forma assíncrona chamando o endpoint UserInfo do Google.
     Retorna o payload com 'sub', 'email', 'name', etc.
@@ -21,4 +22,4 @@ async def verify_google_token(token: str) -> dict:
         )
         if response.status_code != 200:
             raise ValueError("Invalid Google Access Token")
-        return response.json()
+        return cast(dict[str, Any], response.json())

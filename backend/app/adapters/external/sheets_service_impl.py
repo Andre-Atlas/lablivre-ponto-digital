@@ -1,14 +1,17 @@
-import gspread
+from typing import Any
 import asyncio
 import os
 from datetime import datetime
-from app.domain.ports.sheets_service import SheetsService
-from app.domain.models import CheckIn, User, Device
+
+import gspread
+
 from app.config import settings
+from app.domain.models import CheckIn, Device, User
+from app.domain.ports.sheets_service import SheetsService
 
 
 class SheetsServiceImpl(SheetsService):
-    def __init__(self):
+    def __init__(self) -> None:
         # Conecta usando a conta de serviço
         creds_path = os.path.join(
             os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "..", "credentials.json"
@@ -32,6 +35,8 @@ class SheetsServiceImpl(SheetsService):
 
     def _sync_export(self, nome_aba: str, checkin: CheckIn, user: User, device: Device) -> bool:
         try:
+            if self.gc is None:
+                return False
             sh = self.gc.open_by_key(settings.GOOGLE_SHEET_ID)
 
             # Tenta pegar a aba com o mês atual, ex: "Alunos_09_2026"

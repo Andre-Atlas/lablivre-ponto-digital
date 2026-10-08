@@ -1,7 +1,8 @@
 import asyncio
 import uuid
+
 from app.adapters.persistence.database import async_session_maker
-from app.adapters.persistence.orm_models import User, TipoUsuario
+from app.adapters.persistence.orm_models import TipoUsuario, User
 from app.utils.security import get_password_hash
 
 

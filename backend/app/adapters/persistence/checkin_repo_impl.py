@@ -1,22 +1,25 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
-from typing import Optional, List
+from typing import Any
 from uuid import UUID
 
-from app.domain.ports.checkin_repository import CheckInRepository
-from app.domain.models import CheckIn, CheckInDuplicata
-from app.domain.enums import StatusCheckin
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+
 from app.adapters.persistence.orm_models import (
     Checkin as CheckinORM,
+)
+from app.adapters.persistence.orm_models import (
     CheckinDuplicata as DuplicataORM,
 )
+from app.domain.enums import StatusCheckin
+from app.domain.models import CheckIn, CheckInDuplicata
+from app.domain.ports.checkin_repository import CheckInRepository
 
 
 class CheckInRepositoryImpl(CheckInRepository):
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
-    async def buscar_por_turno(self, user_id: UUID, turno_referencia: str) -> Optional[CheckIn]:
+    async def buscar_por_turno(self, user_id: UUID, turno_referencia: str) -> CheckIn | None:
         stmt = select(CheckinORM).where(
             CheckinORM.user_id == user_id, CheckinORM.turno_referencia == turno_referencia
         )
@@ -59,7 +62,7 @@ class CheckInRepositoryImpl(CheckInRepository):
         await self.session.flush()
         return duplicata
 
-    async def listar_nao_exportados(self) -> List[CheckIn]:
+    async def listar_nao_exportados(self) -> list[CheckIn]:
         stmt = select(CheckinORM).where(CheckinORM.exportado_sheets == False)
         result = await self.session.execute(stmt)
         return [self._to_domain(orm) for orm in result.scalars().all()]
@@ -80,7 +83,7 @@ class CheckInRepositoryImpl(CheckInRepository):
             hora_checkin=orm.hora_checkin,
             ip_publico=orm.ip_publico,
             ssid=orm.ssid,
-            bssids=orm.bssids,
+            bssids=[item for item in orm.bssids if isinstance(item, str)] if isinstance(orm.bssids, list) else [],
             status=StatusCheckin(orm.status),
             turno_referencia=orm.turno_referencia,
             exportado_sheets=orm.exportado_sheets,

@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from __future__ import annotations
-
 """Entidades de domínio puras do Ponto Digital.
 
 Todas as entidades são dataclasses sem dependência de ORM ou frameworks.
@@ -9,12 +7,10 @@ Inclui funções de negócio para identificação de turnos e cálculo de status
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime, time, date, timedelta
+from datetime import datetime, time
 from uuid import UUID
-from typing import Optional
 
-from .enums import TipoUsuario, StatusCheckin, DiaSemana, Turno, RoleAdmin
-
+from .enums import DiaSemana, RoleAdmin, StatusCheckin, TipoUsuario, Turno
 
 # ──────────────────────────────────────────────
 # Entidades de Domínio
@@ -37,7 +33,7 @@ class User:
     criado_em: datetime
     atualizado_em: datetime
     role: RoleAdmin = field(default=RoleAdmin.NONE)
-    patrimonio: Optional[str] = None
+    patrimonio: str | None = None
 
 
 @dataclass
@@ -50,8 +46,8 @@ class Device:
     os_type: str
     principal: bool
     registrado_em: datetime
-    serial_number: Optional[str] = None
-    hostname: Optional[str] = None
+    serial_number: str | None = None
+    hostname: str | None = None
 
 
 @dataclass
@@ -67,8 +63,8 @@ class CheckIn:
     turno_referencia: str
     exportado_sheets: bool
     criado_em: datetime
-    ip_publico: Optional[str] = None
-    ssid: Optional[str] = None
+    ip_publico: str | None = None
+    ssid: str | None = None
 
 
 @dataclass
@@ -82,7 +78,7 @@ class CheckInDuplicata:
     hora_tentativa: datetime
     motivo: str
     criado_em: datetime
-    ip_publico: Optional[str] = None
+    ip_publico: str | None = None
 
 
 @dataclass
@@ -94,7 +90,7 @@ class Config:
     valor: str
     atualizado_em: datetime
     role: RoleAdmin = field(default=RoleAdmin.NONE)
-    atualizado_por: Optional[UUID] = None
+    atualizado_por: UUID | None = None
 
 
 # ──────────────────────────────────────────────

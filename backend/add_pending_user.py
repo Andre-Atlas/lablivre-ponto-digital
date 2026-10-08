@@ -1,9 +1,8 @@
-from fastapi.testclient import TestClient
-from app.main import app
-from app.adapters.persistence.database import async_session_maker
-from app.adapters.persistence.orm_models import User, TipoUsuario
-import uuid
 import asyncio
+import uuid
+
+from app.adapters.persistence.database import async_session_maker
+from app.adapters.persistence.orm_models import TipoUsuario, User
 
 
 async def add_user():

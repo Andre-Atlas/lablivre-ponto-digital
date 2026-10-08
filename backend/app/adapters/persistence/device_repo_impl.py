@@ -1,18 +1,18 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
-from typing import Optional, List
 from uuid import UUID
 
-from app.domain.ports.device_repository import DeviceRepository
-from app.domain.models import Device
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+
 from app.adapters.persistence.orm_models import Device as DeviceORM
+from app.domain.models import Device
+from app.domain.ports.device_repository import DeviceRepository
 
 
 class DeviceRepositoryImpl(DeviceRepository):
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def buscar_por_mac(self, mac_address: str) -> Optional[Device]:
+    async def buscar_por_mac(self, mac_address: str) -> Device | None:
         stmt = select(DeviceORM).where(DeviceORM.mac_address == mac_address)
         result = await self.session.execute(stmt)
         device_orm = result.scalars().first()
@@ -20,7 +20,7 @@ class DeviceRepositoryImpl(DeviceRepository):
             return None
         return self._to_domain(device_orm)
 
-    async def buscar_por_user(self, user_id: UUID) -> List[Device]:
+    async def buscar_por_user(self, user_id: UUID) -> list[Device]:
         stmt = select(DeviceORM).where(DeviceORM.user_id == user_id)
         result = await self.session.execute(stmt)
         return [self._to_domain(d) for d in result.scalars().all()]

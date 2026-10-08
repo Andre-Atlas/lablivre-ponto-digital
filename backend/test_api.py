@@ -1,13 +1,11 @@
 import asyncio
-import uuid
-import httpx
 import random
+import uuid
 
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.adapters.persistence.database import async_session_maker
-from app.adapters.persistence.orm_models import User, Device
-from app.domain.enums import TipoUsuario
 from app.adapters.auth.jwt_handler import create_access_token
+from app.adapters.persistence.database import async_session_maker
+from app.adapters.persistence.orm_models import Device, User
+from app.domain.enums import TipoUsuario
 
 
 async def setup_test_data():
@@ -51,6 +49,7 @@ async def run_tests():
     headers = {"Authorization": f"Bearer {token}"}
 
     from fastapi.testclient import TestClient
+
     from app.main import app
 
     with TestClient(app) as test_client:

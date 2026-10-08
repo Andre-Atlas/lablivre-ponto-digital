@@ -1,37 +1,33 @@
-from fastapi import APIRouter, Depends, Request, HTTPException, status, BackgroundTasks
-from sqlalchemy import select
-from uuid import UUID
-from app.domain.enums import TipoUsuario, StatusCheckin
-from app.adapters.persistence.orm_models import User as UserModel, Device as DeviceModel
-from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 
-from app.api.schemas.checkin_schemas import CheckinRequest, CheckinResponse
-from app.api.middleware.auth_dependencies import get_current_user
-from app.application.checkin_use_case import CheckinUseCase
-from app.adapters.persistence.checkin_repo_impl import CheckInRepositoryImpl
-from app.adapters.persistence.user_repo_impl import UserRepositoryImpl
-from app.adapters.persistence.device_repo_impl import DeviceRepositoryImpl
-from app.adapters.persistence.config_repo_impl import ConfigRepositoryImpl
-from app.adapters.persistence.database import get_db, async_session_maker
+from typing import Any
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.adapters.external.geolocation_service_impl import GeolocationServiceImpl
 from app.adapters.external.sheets_service_impl import SheetsServiceImpl
-
+from app.adapters.persistence.checkin_repo_impl import CheckInRepositoryImpl
+from app.adapters.persistence.config_repo_impl import ConfigRepositoryImpl
+from app.adapters.persistence.database import async_session_maker, get_db
+from app.adapters.persistence.device_repo_impl import DeviceRepositoryImpl
+from app.adapters.persistence.user_repo_impl import UserRepositoryImpl
+from app.api.middleware.auth_dependencies import get_current_user
+from app.api.schemas.checkin_schemas import CheckinRequest, CheckinResponse
+from app.application.checkin_use_case import CheckinUseCase
 from app.domain.exceptions import (
-    UsuarioInativoError,
-    UsuarioNaoAprovadoError,
     DispositivoNaoRegistradoError,
+    DuplicataError,
     ForaDoRaioError,
     ForaTurnoError,
-    DuplicataError,
+    UsuarioInativoError,
+    UsuarioNaoAprovadoError,
 )
-from app.domain.models import CheckIn, User, Device
+from app.domain.models import CheckIn, Device, User
 
 router = APIRouter(prefix="/checkin", tags=["Check-in"])
 
 
-async def background_sheets_export(checkin: CheckIn, user: User, device: Device):
+async def background_sheets_export(checkin: CheckIn, user: User, device: Device) -> Any:
     """Executado em background com sua própria sessão de banco de dados."""
     async with async_session_maker() as db:
         use_case = CheckinUseCase(
@@ -51,9 +47,9 @@ async def registrar_checkin(
     request: Request,
     checkin_req: CheckinRequest,
     background_tasks: BackgroundTasks,
-    user_payload: dict = Depends(get_current_user),
+    user_payload: dict[str, Any] = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-):
+) -> Any:
     ip_publico = request.client.host if request.client else "127.0.0.1"
 
     use_case = CheckinUseCase(
@@ -83,7 +79,7 @@ async def registrar_checkin(
             hora_registrada=checkin.hora_checkin,
         )
 
-    except DuplicataError as e:
+    except DuplicataError:
         await db.commit()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="Você já bateu o ponto neste turno"

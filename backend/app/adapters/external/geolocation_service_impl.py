@@ -1,8 +1,9 @@
 import math
+
 import httpx
-from typing import List, Tuple
-from app.domain.ports.geolocation_service import GeolocationService
+
 from app.config import settings
+from app.domain.ports.geolocation_service import GeolocationService
 
 
 def haversine(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -26,13 +27,13 @@ def haversine(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
 class GeolocationServiceImpl(GeolocationService):
     async def validar_localizacao(
         self,
-        bssids: List[str],
+        bssids: list[str],
         lat_centro: float,
         lng_centro: float,
         raio_metros: int,
-        lat_user: float = None,
-        lng_user: float = None,
-    ) -> Tuple[bool, float]:
+        lat_user: float | None = None,
+        lng_user: float | None = None,
+    ) -> tuple[bool, float]:
 
         if lat_user is not None and lng_user is not None:
             dist = haversine(lat_centro, lng_centro, lat_user, lng_user)

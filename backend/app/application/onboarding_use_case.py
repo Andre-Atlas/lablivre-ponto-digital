@@ -1,18 +1,19 @@
-from uuid import uuid4
-from datetime import datetime, timezone
-from app.domain.ports.user_repository import UserRepository
-from app.domain.ports.device_repository import DeviceRepository
-from app.api.schemas.auth_schemas import OnboardingRequest
-from app.domain.models import User, Device
-from app.domain.enums import TipoUsuario
-from app.domain.exceptions import EmailDuplicadoError, PatrimonioObrigatorioError
+from typing import Any
+from datetime import UTC
+
 from app.adapters.auth.jwt_handler import create_access_token
 from app.adapters.auth.oauth_google import verify_google_token
 from app.adapters.auth.oauth_microsoft import verify_microsoft_token
+from app.api.schemas.auth_schemas import OnboardingRequest
+from app.domain.enums import TipoUsuario
+from app.domain.exceptions import PatrimonioObrigatorioError
+from app.domain.models import User
+from app.domain.ports.device_repository import DeviceRepository
+from app.domain.ports.user_repository import UserRepository
 
 
 class OnboardingUseCase:
-    def __init__(self, user_repo: UserRepository, device_repo: DeviceRepository):
+    def __init__(self, user_repo: UserRepository, device_repo: DeviceRepository) -> None:
         self.user_repo = user_repo
         self.device_repo = device_repo
 
@@ -41,8 +42,9 @@ class OnboardingUseCase:
             )
 
             if not mac_existente:
+                from datetime import datetime
                 from uuid import uuid4
-                from datetime import datetime, timezone
+
                 from app.domain.models import Device
 
                 novo_device = Device(
@@ -53,7 +55,7 @@ class OnboardingUseCase:
                     hostname=request.device_hostname,
                     serial_number=request.device_serial,
                     principal=len(dispositivos_do_usuario) == 0,
-                    registrado_em=datetime.now(timezone.utc),
+                    registrado_em=datetime.now(UTC),
                 )
                 await self.device_repo.criar(novo_device)
 
@@ -69,7 +71,7 @@ class OnboardingUseCase:
             if not request.turma_ou_equipe:
                 raise ValueError("Turma/Equipe é obrigatória para novos alunos.")
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         novo_usuario = User(
             id=uuid4(),
@@ -78,7 +80,7 @@ class OnboardingUseCase:
             tipo=request.tipo,
             turma_ou_equipe=request.turma_ou_equipe or "STAFF",
             oauth_provider=request.oauth_provider.lower(),
-            oauth_sub=sub,
+            oauth_sub=sub or "",
             patrimonio=request.patrimonio,
             ativo=True,
             admin_aprovado=False,

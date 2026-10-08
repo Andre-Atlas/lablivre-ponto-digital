@@ -1,6 +1,6 @@
-from pydantic import BaseModel
-from typing import Optional
 from uuid import UUID
+
+from pydantic import BaseModel
 
 from app.domain.enums import TipoUsuario
 
@@ -9,12 +9,12 @@ class OnboardingRequest(BaseModel):
     oauth_provider: str
     oauth_token: str
     tipo: TipoUsuario
-    turma_ou_equipe: Optional[str] = None
-    patrimonio: Optional[str] = None
+    turma_ou_equipe: str | None = None
+    patrimonio: str | None = None
     device_mac: str
     device_os: str
-    device_hostname: Optional[str] = None
-    device_serial: Optional[str] = None
+    device_hostname: str | None = None
+    device_serial: str | None = None
 
 
 class OnboardingResponse(BaseModel):

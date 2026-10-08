@@ -1,6 +1,6 @@
 import asyncio
+
 import asyncpg
-import sys
 
 
 async def check(host, port):

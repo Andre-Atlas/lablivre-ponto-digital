@@ -1,6 +1,6 @@
 import re
 
-with open("app/api/v1/router_admin.py", "r") as f:
+with open("app/api/v1/router_admin.py") as f:
     content = f.read()
 
 new_export = """

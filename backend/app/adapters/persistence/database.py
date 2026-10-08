@@ -1,12 +1,13 @@
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-from typing import AsyncGenerator
-import os
+from typing import Any
+from collections.abc import AsyncGenerator
+
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.config import settings
 
 DATABASE_URL = settings.DATABASE_URL or "sqlite+aiosqlite:///./ponto_digital.db"
 
-connect_args: dict = {}
+connect_args: dict[str, Any] = {}
 if "sqlite" in DATABASE_URL:
     connect_args["check_same_thread"] = False
 elif "asyncpg" in DATABASE_URL:

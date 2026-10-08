@@ -1,19 +1,16 @@
-import pytest
-from app.adapters.persistence.orm_models import (
-    User,
-    Device,
-    Checkin,
-    CheckinDuplicata,
-    Config,
-    Admin,
-    IpAllowlist,
-    BssidAllowlist,
-    TipoUsuario,
-    StatusCheckin,
-    RoleAdmin,
-)
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
+from app.adapters.persistence.orm_models import (
+    Admin,
+    Checkin,
+    Config,
+    Device,
+    RoleAdmin,
+    StatusCheckin,
+    TipoUsuario,
+    User,
+)
 
 
 def test_user_instantiation():
@@ -42,7 +39,7 @@ def test_checkin_instantiation():
     """Testa a criação de um Checkin e suas relações básicas."""
     user_id = uuid.uuid4()
     device_id = uuid.uuid4()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     checkin = Checkin(
         user_id=user_id,

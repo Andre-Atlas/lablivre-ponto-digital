@@ -1,15 +1,13 @@
-from datetime import datetime, time, date
+from datetime import datetime, time
 from uuid import uuid4
+
+from app.domain.enums import DiaSemana, StatusCheckin, TipoUsuario, Turno
 from app.domain.models import (
-    TurnoConfig,
     TURNOS_ALUNOS,
-    identificar_turno,
-    calcular_status,
     User,
-    Device,
-    CheckIn,
+    calcular_status,
+    identificar_turno,
 )
-from app.domain.enums import DiaSemana, Turno, TipoUsuario, StatusCheckin
 
 
 def test_turnos_alunos_corretude():

@@ -1,7 +1,8 @@
-from pydantic import BaseModel, ConfigDict
-from typing import List, Optional
-from uuid import UUID
 from datetime import datetime
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict
+
 from app.domain.enums import TipoUsuario
 
 
@@ -12,9 +13,9 @@ class UserAdminResponse(BaseModel):
     email: str
     nome: str
     tipo: TipoUsuario
-    role: Optional[str] = None
+    role: str | None = None
     turma_ou_equipe: str
-    patrimonio: Optional[str] = None
+    patrimonio: str | None = None
     ativo: bool
     admin_aprovado: bool
     criado_em: datetime
@@ -25,7 +26,7 @@ class DeviceAdminResponse(BaseModel):
     user_id: UUID
     mac_address: str
     os_type: str
-    hostname: Optional[str] = None
+    hostname: str | None = None
     principal: bool
     registrado_em: datetime
 

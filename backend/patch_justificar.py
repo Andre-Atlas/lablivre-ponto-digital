@@ -1,6 +1,5 @@
-import re
 
-with open("backend/app/api/v1/router_admin.py", "r") as f:
+with open("backend/app/api/v1/router_admin.py") as f:
     content = f.read()
 
 # First add the Pydantic schema

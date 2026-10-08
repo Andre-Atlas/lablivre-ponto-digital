@@ -1,10 +1,9 @@
 from uuid import UUID
-from typing import List
 
-from app.domain.ports.user_repository import UserRepository
-from app.domain.ports.device_repository import DeviceRepository
+from app.domain.models import CheckIn, Device, User
 from app.domain.ports.checkin_repository import CheckInRepository
-from app.domain.models import User, Device, CheckIn
+from app.domain.ports.device_repository import DeviceRepository
+from app.domain.ports.user_repository import UserRepository
 
 
 class AdminUseCase:
@@ -18,7 +17,7 @@ class AdminUseCase:
         self.device_repo = device_repo
         self.checkin_repo = checkin_repo
 
-    async def listar_usuarios(self) -> List[User]:
+    async def listar_usuarios(self) -> list[User]:
         return await self.user_repo.listar()
 
     async def aprovar_usuario(self, user_id: UUID) -> User:
@@ -37,8 +36,8 @@ class AdminUseCase:
         user.ativo = False
         return await self.user_repo.atualizar(user)
 
-    async def listar_dispositivos(self, user_id: UUID) -> List[Device]:
+    async def listar_dispositivos(self, user_id: UUID) -> list[Device]:
         return await self.device_repo.buscar_por_user(user_id)
 
-    async def listar_checkins_pendentes(self) -> List[CheckIn]:
+    async def listar_checkins_pendentes(self) -> list[CheckIn]:
         return await self.checkin_repo.listar_nao_exportados()

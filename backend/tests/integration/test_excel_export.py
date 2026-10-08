@@ -1,19 +1,25 @@
-import pytest
 import io
-import openpyxl
-from httpx import AsyncClient, ASGITransport
 import uuid
-from datetime import datetime, time, date, timezone
-from app.main import app
+from datetime import UTC, datetime
+
+import openpyxl
+import pytest
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy import text
+
+from app.adapters.auth.jwt_handler import create_access_token
 from app.adapters.persistence.database import async_session_maker
 from app.adapters.persistence.orm_models import (
-    User as UserModel,
     Checkin as CheckInModel,
+)
+from app.adapters.persistence.orm_models import (
     Device as DeviceModel,
 )
-from app.domain.enums import TipoUsuario, StatusCheckin, RoleAdmin
-from app.adapters.auth.jwt_handler import create_access_token
-from sqlalchemy import text
+from app.adapters.persistence.orm_models import (
+    User as UserModel,
+)
+from app.domain.enums import RoleAdmin, StatusCheckin, TipoUsuario
+from app.main import app
 
 
 @pytest.fixture
@@ -86,7 +92,7 @@ async def setup_data():
         c1 = CheckInModel(
             user_id=staff_id,
             device_id=dev_id,
-            hora_checkin=datetime.now(timezone.utc),
+            hora_checkin=datetime.now(UTC),
             ip_publico="1.1.1.1",
             status=StatusCheckin.PRESENTE,
             turno_referencia="STAFF_MANHA",
@@ -94,7 +100,7 @@ async def setup_data():
         c2 = CheckInModel(
             user_id=aluno_id,
             device_id=d2.id,
-            hora_checkin=datetime.now(timezone.utc),
+            hora_checkin=datetime.now(UTC),
             ip_publico="1.1.1.2",
             status=StatusCheckin.ATRASADO,
             turno_referencia="ALUNO_MANHA",

@@ -1,5 +1,6 @@
+from typing import Any, cast
+
 import httpx
-from typing import Dict, Any
 
 
 class InvalidTokenError(Exception):
@@ -8,7 +9,7 @@ class InvalidTokenError(Exception):
     pass
 
 
-async def verify_microsoft_token(token: str) -> Dict[str, Any]:
+async def verify_microsoft_token(token: str) -> dict[str, Any]:
     """
     Verifica um access token da Microsoft chamando a Graph API.
     Retorna o JSON da resposta contendo 'userPrincipalName' (email), 'displayName', 'id'.
@@ -20,6 +21,6 @@ async def verify_microsoft_token(token: str) -> Dict[str, Any]:
         response = await client.get(url, headers=headers)
 
         if response.status_code == 200:
-            return response.json()
+            return cast(dict[str, Any], response.json())
         else:
             raise InvalidTokenError(f"Token da Microsoft inválido. Status: {response.status_code}")

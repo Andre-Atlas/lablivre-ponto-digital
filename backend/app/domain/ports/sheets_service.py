@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 
-from ..models import CheckIn, User, Device
+from ..models import CheckIn, Device, User
 
 
 class SheetsService(ABC):

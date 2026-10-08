@@ -1,16 +1,17 @@
 import asyncio
-from logging.config import fileConfig
-from sqlalchemy import pool
-from sqlalchemy.ext.asyncio import async_engine_from_config
-from alembic import context
 import os
 import sys
+from logging.config import fileConfig
+
+from alembic import context
+from sqlalchemy import pool
+from sqlalchemy.ext.asyncio import async_engine_from_config
 
 # Add backend directory to sys.path
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from app.adapters.persistence.orm_models import Base
 from app.adapters.persistence.database import DATABASE_URL
+from app.adapters.persistence.orm_models import Base
 
 config = context.config
 if config.config_file_name is not None:

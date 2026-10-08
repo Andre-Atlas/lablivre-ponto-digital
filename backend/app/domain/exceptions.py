@@ -4,8 +4,8 @@ Exceções específicas do negócio, sem referência a códigos HTTP
 (a tradução para HTTP status ocorre na camada de API).
 """
 
-from uuid import UUID
 from datetime import datetime
+from uuid import UUID
 
 
 class DomainError(Exception):

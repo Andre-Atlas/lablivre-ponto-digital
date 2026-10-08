@@ -1,19 +1,19 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
-from typing import Optional, List
 from uuid import UUID
 
-from app.domain.ports.user_repository import UserRepository
-from app.domain.models import User
-from app.domain.enums import TipoUsuario
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+
 from app.adapters.persistence.orm_models import User as UserORM
+from app.domain.enums import TipoUsuario
+from app.domain.models import User
+from app.domain.ports.user_repository import UserRepository
 
 
 class UserRepositoryImpl(UserRepository):
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def buscar_por_id(self, user_id: UUID) -> Optional[User]:
+    async def buscar_por_id(self, user_id: UUID) -> User | None:
         stmt = select(UserORM).where(UserORM.id == user_id)
         result = await self.session.execute(stmt)
         user_orm = result.scalars().first()
@@ -21,7 +21,7 @@ class UserRepositoryImpl(UserRepository):
             return None
         return self._to_domain(user_orm)
 
-    async def buscar_por_email(self, email: str) -> Optional[User]:
+    async def buscar_por_email(self, email: str) -> User | None:
         stmt = select(UserORM).where(UserORM.email == email)
         result = await self.session.execute(stmt)
         user_orm = result.scalars().first()
@@ -61,8 +61,8 @@ class UserRepositoryImpl(UserRepository):
         return user
 
     async def listar(
-        self, tipo: Optional[TipoUsuario] = None, turma: Optional[str] = None
-    ) -> List[User]:
+        self, tipo: TipoUsuario | None = None, turma: str | None = None
+    ) -> list[User]:
         stmt = select(UserORM)
         if tipo:
             stmt = stmt.where(UserORM.tipo == tipo)

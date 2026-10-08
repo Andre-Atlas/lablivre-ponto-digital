@@ -1,12 +1,14 @@
-import pytest
-from httpx import AsyncClient, ASGITransport
 import uuid
-from app.main import app
+
+import pytest
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy import text
+
+from app.adapters.auth.jwt_handler import create_access_token
 from app.adapters.persistence.database import async_session_maker
 from app.adapters.persistence.orm_models import User as UserModel
-from app.domain.enums import TipoUsuario, RoleAdmin
-from app.adapters.auth.jwt_handler import create_access_token
-from sqlalchemy import text
+from app.domain.enums import RoleAdmin, TipoUsuario
+from app.main import app
 
 
 @pytest.fixture

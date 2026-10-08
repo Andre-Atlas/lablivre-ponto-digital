@@ -4,10 +4,11 @@ import calendar
 import csv
 import io
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from uuid import UUID
 
 import openpyxl
+from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ConfigDict
@@ -37,8 +38,8 @@ class UserAdminResponse(BaseModel):
 
 
 async def require_admin(
-    payload: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)
-):
+    payload: dict[str, Any] = Depends(get_current_user), db: AsyncSession = Depends(get_db)
+) -> Any:
     user_id_str = payload.get("sub")
     if not user_id_str:
         raise HTTPException(status_code=401, detail="Token inválido") from None
@@ -59,7 +60,7 @@ async def require_admin(
 
 
 @router.get("/usuarios", response_model=list[UserAdminResponse])
-async def list_usuarios(db: AsyncSession = Depends(get_db), admin: User = Depends(require_admin)):
+async def list_usuarios(db: AsyncSession = Depends(get_db), admin: User = Depends(require_admin)) -> Any:
     result = await db.execute(select(UserModel))
     users = result.scalars().all()
     return users  # Let FastAPI serialize it. We just need from_attributes=True in schema.
@@ -68,7 +69,7 @@ async def list_usuarios(db: AsyncSession = Depends(get_db), admin: User = Depend
 @router.post("/usuarios/{user_id}/aprovar")
 async def aprovar_usuario(
     user_id: UUID, db: AsyncSession = Depends(get_db), admin: User = Depends(require_admin)
-):
+) -> Any:
     result = await db.execute(select(UserModel).where(UserModel.id == user_id))
     user_model = result.scalars().first()
 
@@ -92,7 +93,7 @@ async def create_admin(
     request: CreateAdminRequest,
     db: AsyncSession = Depends(get_db),
     admin: User = Depends(require_admin),
-):
+) -> dict[str, Any]:
     # Verify email uniqueness
     existing = await db.execute(select(UserModel).where(UserModel.email == request.email))
     if existing.scalars().first():
@@ -117,7 +118,7 @@ async def create_admin(
 @router.delete("/usuarios/{user_id}")
 async def delete_usuario(
     user_id: UUID, db: AsyncSession = Depends(get_db), admin: User = Depends(require_admin)
-):
+) -> Any:
     result = await db.execute(select(UserModel).where(UserModel.id == user_id))
     user_model = result.scalars().first()
 
@@ -133,7 +134,7 @@ async def delete_usuario(
 
 
 @router.get("/export/usuarios")
-async def export_usuarios(db: AsyncSession = Depends(get_db), admin: User = Depends(require_admin)):
+async def export_usuarios(db: AsyncSession = Depends(get_db), admin: User = Depends(require_admin)) -> Any:
     result = await db.execute(select(UserModel))
     users = result.scalars().all()
 
@@ -151,7 +152,7 @@ async def export_usuarios(db: AsyncSession = Depends(get_db), admin: User = Depe
                 "Sim" if u.admin_aprovado else "Nao",
                 u.turma_ou_equipe or "",
                 u.patrimonio or "",
-                u.criado_em.replace(tzinfo=timezone.utc)
+                u.criado_em.replace(tzinfo=UTC)
                 .astimezone(timezone(timedelta(hours=-3)))
                 .strftime("%Y-%m-%d %H:%M:%S")
                 if u.criado_em
@@ -178,7 +179,7 @@ async def export_checkins(
     turno: str | None = None,
     db: AsyncSession = Depends(get_db),
     admin: User = Depends(require_admin),
-):
+) -> StreamingResponse:
     query = select(CheckInModel, UserModel).join(UserModel, CheckInModel.user_id == UserModel.id)
     if tipo:
         query = query.where(UserModel.tipo == tipo)
@@ -188,13 +189,13 @@ async def export_checkins(
         query = query.where(CheckInModel.turno_referencia.ilike(f"%{turno}%"))
     if ano is not None and mes is not None and dia is not None:
         # Approximate filter in DB for the specific day (UTC boundaries might slightly shift, but it's okay for general query)
-        start_date = datetime(ano, mes, dia, tzinfo=timezone.utc)
+        start_date = datetime(ano, mes, dia, tzinfo=UTC)
         end_date = start_date + timedelta(days=1)
         query = query.where(
             CheckInModel.hora_checkin >= start_date, CheckInModel.hora_checkin < end_date
         )
 
-    now_utc = datetime.now(timezone.utc)
+    now_utc = datetime.now(UTC)
     target_year = ano if ano else now_utc.year
     target_month = mes if mes else now_utc.month
 
@@ -214,7 +215,7 @@ async def export_checkins(
         )
 
         # Organize checkins by user and day/turno
-        checkins_by_user: dict = {}
+        checkins_by_user: dict[Any, Any] = {}
         for checkin, user in rows:
             if user.id not in checkins_by_user:
                 checkins_by_user[user.id] = []
@@ -248,7 +249,7 @@ async def export_checkins(
                                 user.nome,
                                 user.email,
                                 user.patrimonio or "",
-                                checkin.hora_checkin.replace(tzinfo=timezone.utc)
+                                checkin.hora_checkin.replace(tzinfo=UTC)
                                 .astimezone(timezone(timedelta(hours=-3)))
                                 .strftime("%Y-%m-%d %H:%M:%S")
                                 if checkin.hora_checkin
@@ -304,7 +305,7 @@ async def export_checkins(
                                     user.email,
                                     user.turma_ou_equipe,
                                     user.patrimonio or "",
-                                    found_checkin.hora_checkin.replace(tzinfo=timezone.utc)
+                                    found_checkin.hora_checkin.replace(tzinfo=UTC)
                                     .astimezone(timezone(timedelta(hours=-3)))
                                     .strftime("%Y-%m-%d %H:%M:%S")
                                     if found_checkin.hora_checkin
@@ -353,7 +354,7 @@ async def export_checkins(
                     user.email,
                     user.turma_ou_equipe or "",
                     user.patrimonio or "",
-                    checkin.hora_checkin.replace(tzinfo=timezone.utc)
+                    checkin.hora_checkin.replace(tzinfo=UTC)
                     .astimezone(timezone(timedelta(hours=-3)))
                     .strftime("%Y-%m-%d %H:%M:%S")
                     if checkin.hora_checkin
@@ -387,7 +388,7 @@ async def create_user_role(
     request: RoleUpdateRequest,
     current_admin: UserModel = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
-):
+) -> dict[str, Any]:
     # Regras de elevação de privilégio:
     # Apenas SUPER_ADMIN pode dar SUPER_ADMIN
     if request.role == RoleAdmin.SUPER_ADMIN and current_admin.role != RoleAdmin.SUPER_ADMIN:
@@ -401,7 +402,7 @@ async def create_user_role(
     if not user:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
 
-    user.role = request.role  # type: ignore
+    user.role = request.role
     await db.commit()
     return {"status": "sucesso", "role": user.role}
 
@@ -412,7 +413,7 @@ async def justificar_falta(
     request: JustificarRequest,
     current_admin: UserModel = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
-):
+) -> dict[str, Any]:
     # Verify user exists
     user_result = await db.execute(select(UserModel).where(UserModel.id == user_id))
     user = user_result.scalars().first()
@@ -431,7 +432,7 @@ async def justificar_falta(
 
     if checkin:
         # Update existing
-        checkin.status = StatusCheckin.JUSTIFICADO  # type: ignore
+        checkin.status = StatusCheckin.JUSTIFICADO
     else:
         # Create new dummy checkin for the justification
         # Get the user's first device or create a mock web device
@@ -456,7 +457,7 @@ async def justificar_falta(
         checkin = CheckInModel(
             user_id=user_id,
             device_id=dev.id,
-            hora_checkin=datetime.now(timezone.utc),  # Audit time
+            hora_checkin=datetime.now(UTC),  # Audit time
             status=StatusCheckin.JUSTIFICADO,
             turno_referencia=turno_ref,
             ip_publico="0.0.0.0",
@@ -477,7 +478,7 @@ async def update_user_role_put(
     request: UpdateRoleRequest,
     db: AsyncSession = Depends(get_db),
     admin: UserModel = Depends(require_admin),
-):
+) -> dict[str, Any]:
     if admin.role != RoleAdmin.SUPER_ADMIN:
         raise HTTPException(status_code=403, detail="Apenas Super Admins podem alterar cargos.")
 
@@ -503,7 +504,7 @@ async def bulk_aprovar_usuarios(
     request: BulkIdsRequest,
     current_admin: UserModel = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
-):
+) -> dict[str, Any]:
     await db.execute(
         update(UserModel).where(UserModel.id.in_(request.user_ids)).values(admin_aprovado=True)
     )
@@ -522,10 +523,10 @@ async def bulk_justificar_faltas(
     request: BulkJustificarRequest,
     current_admin: UserModel = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
-):
+) -> dict[str, Any]:
     turno_ref = f"{request.data}_{request.turno}"
     count = 0
-    now_utc = datetime.now(timezone.utc)
+    now_utc = datetime.now(UTC)
 
     for uid in request.user_ids:
         # Check if checkin already exists
@@ -571,7 +572,7 @@ async def admin_update_user(
     request: UpdateUserAdminRequest,
     current_admin: UserModel = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
-):
+) -> dict[str, Any]:
     user_result = await db.execute(select(UserModel).where(UserModel.id == user_id))
     user = user_result.scalars().first()
     if not user:
@@ -582,7 +583,7 @@ async def admin_update_user(
     if request.patrimonio is not None:
         user.patrimonio = request.patrimonio
     if request.tipo is not None:
-        user.tipo = request.tipo  # type: ignore
+        user.tipo = request.tipo
 
     await db.commit()
     return {"message": "Usuário atualizado com sucesso"}

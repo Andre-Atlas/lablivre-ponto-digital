@@ -1,5 +1,5 @@
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import Optional
 
 
 class Settings(BaseSettings):
@@ -7,14 +7,14 @@ class Settings(BaseSettings):
     APP_VERSION: str = "1.0.0"
     ENVIRONMENT: str = "development"
 
-    DATABASE_URL: Optional[str] = None
+    DATABASE_URL: str | None = None
 
     JWT_SECRET_KEY: str = "super_secret_key_change_me_in_prod"
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRE_HOURS: int = 24
 
     GOOGLE_CLIENT_ID: str = "your_google_client_id.apps.googleusercontent.com"
-    GOOGLE_MAPS_API_KEY: Optional[str] = None
+    GOOGLE_MAPS_API_KEY: str | None = None
 
     GEOFENCING_LAT: float = -15.98998
     GEOFENCING_LNG: float = -48.04487
@@ -28,5 +28,5 @@ class Settings(BaseSettings):
 settings = Settings()
 
 
-def get_settings():
+def get_settings() -> Settings:
     return settings

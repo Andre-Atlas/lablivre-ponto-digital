@@ -1,25 +1,30 @@
-from datetime import datetime, timezone
-from uuid import uuid4, UUID
+from typing import Any
+from datetime import UTC, datetime
+from uuid import UUID, uuid4
+
+from app.api.schemas.checkin_schemas import CheckinRequest
+from app.config import settings
+from app.domain.enums import StatusCheckin, TipoUsuario
+from app.domain.exceptions import (
+    DispositivoNaoRegistradoError,
+    DuplicataError,
+    ForaDoRaioError,
+    UsuarioInativoError,
+)
+from app.domain.models import (
+    CheckIn,
+    CheckInDuplicata,
+    Device,
+    User,
+    calcular_status,
+    identificar_turno,
+)
 from app.domain.ports.checkin_repository import CheckInRepository
-from app.domain.ports.user_repository import UserRepository
-from app.domain.ports.device_repository import DeviceRepository
 from app.domain.ports.config_repository import ConfigRepository
+from app.domain.ports.device_repository import DeviceRepository
 from app.domain.ports.geolocation_service import GeolocationService
 from app.domain.ports.sheets_service import SheetsService
-
-from app.domain.models import CheckIn, CheckInDuplicata, User, Device
-from app.domain.enums import TipoUsuario, StatusCheckin
-from app.domain.models import identificar_turno, calcular_status
-from app.api.schemas.checkin_schemas import CheckinRequest
-from app.domain.exceptions import (
-    UsuarioInativoError,
-    UsuarioNaoAprovadoError,
-    DispositivoNaoRegistradoError,
-    ForaDoRaioError,
-    ForaTurnoError,
-    DuplicataError,
-)
-from app.config import settings
+from app.domain.ports.user_repository import UserRepository
 
 
 class CheckinUseCase:
@@ -31,7 +36,7 @@ class CheckinUseCase:
         config_repo: ConfigRepository,
         sheets_service: SheetsService,
         geolocation_service: GeolocationService,
-    ):
+    ) -> None:
         self.checkin_repo = checkin_repo
         self.user_repo = user_repo
         self.device_repo = device_repo
@@ -76,7 +81,7 @@ class CheckinUseCase:
         if not esta_no_raio:
             raise ForaDoRaioError(dist)
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         now_local = datetime.now()
 
         turno = identificar_turno(user.turma_ou_equipe, now_local)
@@ -130,7 +135,7 @@ class CheckinUseCase:
 
         return novo_checkin, "Ponto registrado com sucesso", user, device
 
-    async def sync_to_sheets(self, checkin: CheckIn, user: User, device: Device):
+    async def sync_to_sheets(self, checkin: CheckIn, user: User, device: Device) -> Any:
         try:
             if user.tipo == TipoUsuario.ALUNO:
                 sucesso = await self.sheets_service.exportar_checkin_aluno(checkin, user, device)

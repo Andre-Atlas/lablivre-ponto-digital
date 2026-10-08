@@ -1,23 +1,25 @@
+from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.adapters.persistence.database import get_db
+from app.adapters.persistence.device_repo_impl import DeviceRepositoryImpl
+from app.adapters.persistence.user_repo_impl import UserRepositoryImpl
 from app.api.schemas.auth_schemas import (
+    LoginRequest,
     OnboardingRequest,
     OnboardingResponse,
     RegisterRequest,
-    LoginRequest,
 )
 from app.application.onboarding_use_case import OnboardingUseCase
 from app.domain.exceptions import EmailDuplicadoError, PatrimonioObrigatorioError
-from app.adapters.persistence.user_repo_impl import UserRepositoryImpl
-from app.adapters.persistence.device_repo_impl import DeviceRepositoryImpl
-from app.adapters.persistence.database import get_db
-from fastapi.responses import JSONResponse
 
 router = APIRouter(prefix="/auth", tags=["Autenticação"])
 
 
 @router.post("/onboarding", response_model=OnboardingResponse)
-async def onboarding(request: OnboardingRequest, db: AsyncSession = Depends(get_db)):
+async def onboarding(request: OnboardingRequest, db: AsyncSession = Depends(get_db)) -> Any:
     user_repo = UserRepositoryImpl(db)
     device_repo = DeviceRepositoryImpl(db)
     use_case = OnboardingUseCase(user_repo=user_repo, device_repo=device_repo)
@@ -50,19 +52,21 @@ async def onboarding(request: OnboardingRequest, db: AsyncSession = Depends(get_
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
-from pydantic import BaseModel
-from app.domain.enums import TipoUsuario, RoleAdmin
-from app.adapters.auth.jwt_handler import create_access_token
-
-from app.adapters.persistence.orm_models import User as UserORM, Device as DeviceORM
-from sqlalchemy.future import select
-from app.utils.security import verify_password, get_password_hash
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
+from pydantic import BaseModel
+from sqlalchemy.future import select
+
+from app.adapters.auth.jwt_handler import create_access_token
+from app.adapters.persistence.orm_models import Device as DeviceORM
+from app.adapters.persistence.orm_models import User as UserORM
+from app.domain.enums import RoleAdmin, TipoUsuario
+from app.utils.security import get_password_hash, verify_password
 
 
 @router.post("/login")
-async def login(request: LoginRequest, db: AsyncSession = Depends(get_db)):
+async def login(request: LoginRequest, db: AsyncSession = Depends(get_db)) -> Any:
     result = await db.execute(select(UserORM).where(UserORM.email == request.email))
     user = result.scalars().first()
 
@@ -89,7 +93,7 @@ async def login(request: LoginRequest, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/register")
-async def register(request: RegisterRequest, db: AsyncSession = Depends(get_db)):
+async def register(request: RegisterRequest, db: AsyncSession = Depends(get_db)) -> Any:
     result = await db.execute(select(UserORM).where(UserORM.email == request.email))
     if result.scalars().first():
         raise HTTPException(status_code=400, detail="E-mail já cadastrado")
@@ -103,7 +107,7 @@ async def register(request: RegisterRequest, db: AsyncSession = Depends(get_db))
         patrimonio=str(request.numero_maquina),
         ativo=True,
         admin_aprovado=False,  # Precisa de aprovação? Depende da sua regra. Deixaremos False por segurança
-        criado_em=datetime.now(timezone.utc),
+        criado_em=datetime.now(UTC),
         role=RoleAdmin.NONE,
         senha_hash=get_password_hash(request.senha),
         oauth_provider="local",
@@ -117,7 +121,7 @@ async def register(request: RegisterRequest, db: AsyncSession = Depends(get_db))
         user_id=new_user.id,
         mac_address=f"web_{uuid.uuid4().hex[:13]}",
         os_type="web",
-        registrado_em=datetime.now(timezone.utc),
+        registrado_em=datetime.now(UTC),
     )
     db.add(new_device)
 
@@ -126,8 +130,6 @@ async def register(request: RegisterRequest, db: AsyncSession = Depends(get_db))
 
 
 from app.api.middleware.auth_dependencies import get_current_user
-from pydantic import BaseModel
-from app.utils.security import verify_password
 
 
 class UpdateNomeRequest(BaseModel):
@@ -137,9 +139,9 @@ class UpdateNomeRequest(BaseModel):
 @router.put("/me")
 async def update_nome(
     request: UpdateNomeRequest,
-    user_payload: dict = Depends(get_current_user),
+    user_payload: dict[str, Any] = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-):
+) -> Any:
     user_id = user_payload["sub"]
     result = await db.execute(select(UserORM).where(UserORM.id == user_id))
     user = result.scalars().first()
@@ -159,9 +161,9 @@ class UpdateSenhaRequest(BaseModel):
 @router.put("/me/senha")
 async def update_senha(
     request: UpdateSenhaRequest,
-    user_payload: dict = Depends(get_current_user),
+    user_payload: dict[str, Any] = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-):
+) -> Any:
     user_id = user_payload["sub"]
     result = await db.execute(select(UserORM).where(UserORM.id == user_id))
     user = result.scalars().first()

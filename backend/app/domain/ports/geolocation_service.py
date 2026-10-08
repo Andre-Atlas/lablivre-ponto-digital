@@ -13,8 +13,8 @@ class GeolocationService(ABC):
         lat_centro: float,
         lng_centro: float,
         raio_metros: int,
-        lat_user: float = None,
-        lng_user: float = None,
+        lat_user: float | None = None,
+        lng_user: float | None = None,
     ) -> tuple[bool, float]:
         """Valida se os BSSIDs estão dentro do raio permitido.
 
