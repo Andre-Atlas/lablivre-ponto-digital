@@ -1,4 +1,3 @@
-from typing import Any
 from datetime import UTC
 
 from app.adapters.auth.jwt_handler import create_access_token

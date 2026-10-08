@@ -1,22 +1,25 @@
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from app.domain.enums import TipoUsuario, StatusCheckin, RoleAdmin
-from sqlalchemy import (
-    String,
-    Boolean,
-    DateTime,
-    Enum as SAEnum,
-    ForeignKey,
-    Text,
-    UniqueConstraint,
-    Index,
-    Uuid,
-    JSON,
-)
-from sqlalchemy.sql import func
 import uuid
 from datetime import datetime
-import enum
-from typing import List, Optional, Any
+from typing import Any
+
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Index,
+    String,
+    Text,
+    UniqueConstraint,
+    Uuid,
+)
+from sqlalchemy import (
+    Enum as SAEnum,
+)
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.sql import func
+
+from app.domain.enums import RoleAdmin, StatusCheckin, TipoUsuario
 
 
 class Base(DeclarativeBase):
@@ -42,8 +45,8 @@ class User(Base):
     turma_ou_equipe: Mapped[str] = mapped_column(String(100), nullable=False)
     oauth_provider: Mapped[str] = mapped_column(String(50), nullable=False)
     oauth_sub: Mapped[str] = mapped_column(String(255), nullable=False)
-    senha_hash: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    patrimonio: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    senha_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    patrimonio: Mapped[str | None] = mapped_column(String(100), nullable=True)
     ativo: Mapped[bool] = mapped_column(Boolean, default=True)
     admin_aprovado: Mapped[bool] = mapped_column(Boolean, default=False)
     criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
@@ -51,10 +54,10 @@ class User(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
-    devices: Mapped[List["Device"]] = relationship(
+    devices: Mapped[list["Device"]] = relationship(
         back_populates="user", cascade="all, delete-orphan", passive_deletes=True
     )
-    checkins: Mapped[List["Checkin"]] = relationship(
+    checkins: Mapped[list["Checkin"]] = relationship(
         back_populates="user", cascade="all, delete-orphan", passive_deletes=True
     )
 
@@ -72,8 +75,8 @@ class Device(Base):
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
     mac_address: Mapped[str] = mapped_column(String(17), unique=True, nullable=False)
-    serial_number: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    hostname: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    serial_number: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    hostname: Mapped[str | None] = mapped_column(String(255), nullable=True)
     os_type: Mapped[str] = mapped_column(String(50), nullable=False)
     principal: Mapped[bool] = mapped_column(Boolean, default=True)
     registrado_em: Mapped[datetime] = mapped_column(
@@ -81,7 +84,7 @@ class Device(Base):
     )
 
     user: Mapped["User"] = relationship(back_populates="devices")
-    checkins: Mapped[List["Checkin"]] = relationship(
+    checkins: Mapped[list["Checkin"]] = relationship(
         back_populates="device", cascade="all, delete-orphan", passive_deletes=True
     )
 
@@ -97,9 +100,9 @@ class Checkin(Base):
         ForeignKey("devices.id", ondelete="CASCADE"), nullable=False
     )
     hora_checkin: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    ip_publico: Mapped[Optional[str]] = mapped_column(String(45), nullable=True)
-    ssid: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    bssids: Mapped[Optional[Any]] = mapped_column(JSON, nullable=True)
+    ip_publico: Mapped[str | None] = mapped_column(String(45), nullable=True)
+    ssid: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    bssids: Mapped[Any | None] = mapped_column(JSON, nullable=True)
     status: Mapped[StatusCheckin] = mapped_column(SAEnum(StatusCheckin), nullable=False)
     turno_referencia: Mapped[str] = mapped_column(String(50), nullable=False)
     exportado_sheets: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -107,7 +110,7 @@ class Checkin(Base):
 
     user: Mapped["User"] = relationship(back_populates="checkins")
     device: Mapped["Device"] = relationship(back_populates="checkins")
-    duplicatas: Mapped[List["CheckinDuplicata"]] = relationship(
+    duplicatas: Mapped[list["CheckinDuplicata"]] = relationship(
         back_populates="checkin_original", cascade="all, delete-orphan", passive_deletes=True
     )
 
@@ -132,7 +135,7 @@ class CheckinDuplicata(Base):
         ForeignKey("devices.id", ondelete="CASCADE"), nullable=False
     )
     hora_tentativa: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    ip_publico: Mapped[Optional[str]] = mapped_column(String(45), nullable=True)
+    ip_publico: Mapped[str | None] = mapped_column(String(45), nullable=True)
     motivo: Mapped[str] = mapped_column(String(100), default="DUPLICATA_MESMO_TURNO")
     criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
@@ -148,7 +151,7 @@ class Admin(Base):
     role: Mapped[RoleAdmin] = mapped_column(SAEnum(RoleAdmin), nullable=False)
     oauth_provider: Mapped[str] = mapped_column(String(50), nullable=False)
     oauth_sub: Mapped[str] = mapped_column(String(255), nullable=False)
-    senha_hash: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    senha_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
     criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -161,7 +164,7 @@ class Config(Base):
     atualizado_em: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
-    atualizado_por: Mapped[Optional[uuid.UUID]] = mapped_column(
+    atualizado_por: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("admins.id", ondelete="SET NULL"), nullable=True
     )
 
@@ -171,7 +174,7 @@ class IpAllowlist(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     ip_cidr: Mapped[str] = mapped_column(String(50), nullable=False)
-    descricao: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    descricao: Mapped[str | None] = mapped_column(String(255), nullable=True)
     ativo: Mapped[bool] = mapped_column(Boolean, default=True)
     criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
@@ -181,7 +184,7 @@ class BssidAllowlist(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     bssid: Mapped[str] = mapped_column(String(17), nullable=False)
-    ssid_associado: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    descricao: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    ssid_associado: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    descricao: Mapped[str | None] = mapped_column(String(255), nullable=True)
     ativo: Mapped[bool] = mapped_column(Boolean, default=True)
     criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

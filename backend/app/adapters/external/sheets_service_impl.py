@@ -1,4 +1,3 @@
-from typing import Any
 import asyncio
 import os
 from datetime import datetime
@@ -35,6 +34,8 @@ class SheetsServiceImpl(SheetsService):
 
     def _sync_export(self, nome_aba: str, checkin: CheckIn, user: User, device: Device) -> bool:
         try:
+            if self.gc is None:
+                return False
             if self.gc is None:
                 return False
             sh = self.gc.open_by_key(settings.GOOGLE_SHEET_ID)

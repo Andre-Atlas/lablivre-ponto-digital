@@ -1,6 +1,6 @@
+from typing import Any
 from uuid import UUID
 
-from typing import Any
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -83,13 +83,13 @@ async def registrar_checkin(
         await db.commit()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="Você já bateu o ponto neste turno"
-        )
+        ) from None
     except (UsuarioInativoError, UsuarioNaoAprovadoError, DispositivoNaoRegistradoError) as e:
         await db.rollback()
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from e
     except (ForaDoRaioError, ForaTurnoError) as e:
         await db.rollback()
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
     except Exception as e:
         await db.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e

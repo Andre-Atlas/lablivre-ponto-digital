@@ -1,5 +1,6 @@
-import httpx
 from typing import Any, cast
+
+import httpx
 
 
 async def verify_google_token(token: str) -> dict[str, Any]:
