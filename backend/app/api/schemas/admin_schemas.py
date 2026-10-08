@@ -4,6 +4,7 @@ from uuid import UUID
 from datetime import datetime
 from app.domain.enums import TipoUsuario
 
+
 class UserAdminResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -18,6 +19,7 @@ class UserAdminResponse(BaseModel):
     admin_aprovado: bool
     criado_em: datetime
 
+
 class DeviceAdminResponse(BaseModel):
     id: UUID
     user_id: UUID
@@ -26,6 +28,7 @@ class DeviceAdminResponse(BaseModel):
     hostname: Optional[str] = None
     principal: bool
     registrado_em: datetime
+
 
 class CheckinAdminResponse(BaseModel):
     id: UUID

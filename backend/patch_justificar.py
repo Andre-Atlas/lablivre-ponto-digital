@@ -2,7 +2,7 @@ import re
 
 with open("backend/app/api/v1/router_admin.py", "r") as f:
     content = f.read()
-    
+
 # First add the Pydantic schema
 schema = """
 class JustificarRequest(BaseModel):
@@ -10,7 +10,9 @@ class JustificarRequest(BaseModel):
     turno: str # MANHA or TARDE
 """
 if "class JustificarRequest" not in content:
-    content = content.replace("class RoleUpdateRequest(BaseModel):", schema + "\nclass RoleUpdateRequest(BaseModel):")
+    content = content.replace(
+        "class RoleUpdateRequest(BaseModel):", schema + "\nclass RoleUpdateRequest(BaseModel):"
+    )
 
 endpoint = """
 @router.post("/usuarios/{user_id}/justificar")
@@ -76,8 +78,8 @@ async def justificar_falta(
     return {"status": "sucesso", "mensagem": "Falta/Atraso justificado com sucesso."}
 """
 
-if "@router.post(\"/usuarios/{user_id}/justificar\")" not in content:
+if '@router.post("/usuarios/{user_id}/justificar")' not in content:
     content += "\n" + endpoint
-    
+
 with open("backend/app/api/v1/router_admin.py", "w") as f:
     f.write(content)

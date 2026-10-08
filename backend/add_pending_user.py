@@ -5,6 +5,7 @@ from app.adapters.persistence.orm_models import User, TipoUsuario
 import uuid
 import asyncio
 
+
 async def add_user():
     async with async_session_maker() as db:
         new_user = User(
@@ -16,10 +17,11 @@ async def add_user():
             oauth_provider="google",
             oauth_sub="123456",
             ativo=True,
-            admin_aprovado=False
+            admin_aprovado=False,
         )
         db.add(new_user)
         await db.commit()
+
 
 if __name__ == "__main__":
     asyncio.run(add_user())

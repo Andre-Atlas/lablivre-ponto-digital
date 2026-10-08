@@ -3,7 +3,9 @@ from app.main import app
 
 client = TestClient(app)
 
-resp_login = client.post("/api/v1/auth/admin-login", json={"email": "admin@example.com", "password": "admin123"})
+resp_login = client.post(
+    "/api/v1/auth/admin-login", json={"email": "admin@example.com", "password": "admin123"}
+)
 print("Login:", resp_login.status_code, resp_login.text)
 token = resp_login.json()["access_token"]
 

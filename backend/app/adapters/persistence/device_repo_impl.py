@@ -7,6 +7,7 @@ from app.domain.ports.device_repository import DeviceRepository
 from app.domain.models import Device
 from app.adapters.persistence.orm_models import Device as DeviceORM
 
+
 class DeviceRepositoryImpl(DeviceRepository):
     def __init__(self, session: AsyncSession):
         self.session = session
@@ -15,7 +16,8 @@ class DeviceRepositoryImpl(DeviceRepository):
         stmt = select(DeviceORM).where(DeviceORM.mac_address == mac_address)
         result = await self.session.execute(stmt)
         device_orm = result.scalars().first()
-        if not device_orm: return None
+        if not device_orm:
+            return None
         return self._to_domain(device_orm)
 
     async def buscar_por_user(self, user_id: UUID) -> List[Device]:
@@ -32,7 +34,7 @@ class DeviceRepositoryImpl(DeviceRepository):
             hostname=device.hostname,
             serial_number=device.serial_number,
             principal=device.principal,
-            registrado_em=device.registrado_em
+            registrado_em=device.registrado_em,
         )
         self.session.add(device_orm)
         await self.session.flush()
@@ -47,5 +49,5 @@ class DeviceRepositoryImpl(DeviceRepository):
             hostname=device_orm.hostname,
             serial_number=device_orm.serial_number,
             principal=device_orm.principal,
-            registrado_em=device_orm.registrado_em
+            registrado_em=device_orm.registrado_em,
         )

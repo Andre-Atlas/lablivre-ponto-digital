@@ -12,9 +12,7 @@ class CheckInRepository(ABC):
     """Port para persistência de registros de ponto."""
 
     @abstractmethod
-    async def buscar_por_turno(
-        self, user_id: UUID, turno_referencia: str
-    ) -> CheckIn | None:
+    async def buscar_por_turno(self, user_id: UUID, turno_referencia: str) -> CheckIn | None:
         """Busca check-in existente para um turno específico."""
         ...
 
@@ -24,9 +22,7 @@ class CheckInRepository(ABC):
         ...
 
     @abstractmethod
-    async def registrar_duplicata(
-        self, duplicata: CheckInDuplicata
-    ) -> CheckInDuplicata:
+    async def registrar_duplicata(self, duplicata: CheckInDuplicata) -> CheckInDuplicata:
         """Registra uma tentativa duplicada para auditoria."""
         ...
 

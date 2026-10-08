@@ -1,9 +1,12 @@
 import httpx
 from typing import Dict, Any
 
+
 class InvalidTokenError(Exception):
     """Exceção levantada quando um token é inválido."""
+
     pass
+
 
 async def verify_microsoft_token(token: str) -> Dict[str, Any]:
     """
@@ -11,13 +14,11 @@ async def verify_microsoft_token(token: str) -> Dict[str, Any]:
     Retorna o JSON da resposta contendo 'userPrincipalName' (email), 'displayName', 'id'.
     """
     url = "https://graph.microsoft.com/v1.0/me"
-    headers = {
-        "Authorization": f"Bearer {token}"
-    }
-    
+    headers = {"Authorization": f"Bearer {token}"}
+
     async with httpx.AsyncClient() as client:
         response = await client.get(url, headers=headers)
-        
+
         if response.status_code == 200:
             return response.json()
         else:

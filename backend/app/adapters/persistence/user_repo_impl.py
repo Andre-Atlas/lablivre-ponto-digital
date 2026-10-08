@@ -8,6 +8,7 @@ from app.domain.models import User
 from app.domain.enums import TipoUsuario
 from app.adapters.persistence.orm_models import User as UserORM
 
+
 class UserRepositoryImpl(UserRepository):
     def __init__(self, session: AsyncSession):
         self.session = session
@@ -16,14 +17,16 @@ class UserRepositoryImpl(UserRepository):
         stmt = select(UserORM).where(UserORM.id == user_id)
         result = await self.session.execute(stmt)
         user_orm = result.scalars().first()
-        if not user_orm: return None
+        if not user_orm:
+            return None
         return self._to_domain(user_orm)
 
     async def buscar_por_email(self, email: str) -> Optional[User]:
         stmt = select(UserORM).where(UserORM.email == email)
         result = await self.session.execute(stmt)
         user_orm = result.scalars().first()
-        if not user_orm: return None
+        if not user_orm:
+            return None
         return self._to_domain(user_orm)
 
     async def criar(self, user: User) -> User:
@@ -39,7 +42,7 @@ class UserRepositoryImpl(UserRepository):
             ativo=user.ativo,
             admin_aprovado=user.admin_aprovado,
             criado_em=user.criado_em,
-            atualizado_em=user.atualizado_em
+            atualizado_em=user.atualizado_em,
         )
         self.session.add(user_orm)
         await self.session.flush()
@@ -57,7 +60,9 @@ class UserRepositoryImpl(UserRepository):
             await self.session.flush()
         return user
 
-    async def listar(self, tipo: Optional[TipoUsuario] = None, turma: Optional[str] = None) -> List[User]:
+    async def listar(
+        self, tipo: Optional[TipoUsuario] = None, turma: Optional[str] = None
+    ) -> List[User]:
         stmt = select(UserORM)
         if tipo:
             stmt = stmt.where(UserORM.tipo == tipo)
@@ -79,5 +84,5 @@ class UserRepositoryImpl(UserRepository):
             ativo=user_orm.ativo,
             admin_aprovado=user_orm.admin_aprovado,
             criado_em=user_orm.criado_em,
-            atualizado_em=user_orm.atualizado_em
+            atualizado_em=user_orm.atualizado_em,
         )

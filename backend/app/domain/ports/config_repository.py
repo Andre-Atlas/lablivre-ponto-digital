@@ -17,9 +17,7 @@ class ConfigRepository(ABC):
         ...
 
     @abstractmethod
-    async def salvar(
-        self, chave: str, valor: str, admin_id: UUID | None = None
-    ) -> Config:
+    async def salvar(self, chave: str, valor: str, admin_id: UUID | None = None) -> Config:
         """Salva ou atualiza uma configuração."""
         ...
 

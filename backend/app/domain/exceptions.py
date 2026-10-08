@@ -31,9 +31,7 @@ class ForaDoRaioError(DomainError):
 
     def __init__(self, distancia_metros: float) -> None:
         self.distancia_metros = distancia_metros
-        super().__init__(
-            f"Fora do raio de check-in. Distância: {distancia_metros:.2f}m."
-        )
+        super().__init__(f"Fora do raio de check-in. Distância: {distancia_metros:.2f}m.")
 
 
 class UsuarioNaoAprovadoError(DomainError):
@@ -55,8 +53,7 @@ class DuplicataError(DomainError):
         self.checkin_original_id = checkin_original_id
         self.hora_original = hora_original
         super().__init__(
-            f"Check-in duplicado. Original: {checkin_original_id} "
-            f"em {hora_original.isoformat()}."
+            f"Check-in duplicado. Original: {checkin_original_id} em {hora_original.isoformat()}."
         )
 
 

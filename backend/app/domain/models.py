@@ -116,17 +116,37 @@ class TurnoConfig:
 # Definição fixa dos turnos das turmas de alunos
 TURNOS_ALUNOS: list[TurnoConfig] = [
     # Turma 1: Seg/Qua 08:00-12:00 + 14:00-18:00; Sex 08:00-12:00
-    TurnoConfig(turma="Turma 1", dia=DiaSemana.SEG, inicio=time(8, 0), fim=time(12, 0), turno=Turno.MANHA),
-    TurnoConfig(turma="Turma 1", dia=DiaSemana.SEG, inicio=time(14, 0), fim=time(18, 0), turno=Turno.TARDE),
-    TurnoConfig(turma="Turma 1", dia=DiaSemana.QUA, inicio=time(8, 0), fim=time(12, 0), turno=Turno.MANHA),
-    TurnoConfig(turma="Turma 1", dia=DiaSemana.QUA, inicio=time(14, 0), fim=time(18, 0), turno=Turno.TARDE),
-    TurnoConfig(turma="Turma 1", dia=DiaSemana.SEX, inicio=time(8, 0), fim=time(12, 0), turno=Turno.MANHA),
+    TurnoConfig(
+        turma="Turma 1", dia=DiaSemana.SEG, inicio=time(8, 0), fim=time(12, 0), turno=Turno.MANHA
+    ),
+    TurnoConfig(
+        turma="Turma 1", dia=DiaSemana.SEG, inicio=time(14, 0), fim=time(18, 0), turno=Turno.TARDE
+    ),
+    TurnoConfig(
+        turma="Turma 1", dia=DiaSemana.QUA, inicio=time(8, 0), fim=time(12, 0), turno=Turno.MANHA
+    ),
+    TurnoConfig(
+        turma="Turma 1", dia=DiaSemana.QUA, inicio=time(14, 0), fim=time(18, 0), turno=Turno.TARDE
+    ),
+    TurnoConfig(
+        turma="Turma 1", dia=DiaSemana.SEX, inicio=time(8, 0), fim=time(12, 0), turno=Turno.MANHA
+    ),
     # Turma 2: Ter/Qui 08:00-12:00 + 14:00-18:00; Sex 14:00-18:00
-    TurnoConfig(turma="Turma 2", dia=DiaSemana.TER, inicio=time(8, 0), fim=time(12, 0), turno=Turno.MANHA),
-    TurnoConfig(turma="Turma 2", dia=DiaSemana.TER, inicio=time(14, 0), fim=time(18, 0), turno=Turno.TARDE),
-    TurnoConfig(turma="Turma 2", dia=DiaSemana.QUI, inicio=time(8, 0), fim=time(12, 0), turno=Turno.MANHA),
-    TurnoConfig(turma="Turma 2", dia=DiaSemana.QUI, inicio=time(14, 0), fim=time(18, 0), turno=Turno.TARDE),
-    TurnoConfig(turma="Turma 2", dia=DiaSemana.SEX, inicio=time(14, 0), fim=time(18, 0), turno=Turno.TARDE),
+    TurnoConfig(
+        turma="Turma 2", dia=DiaSemana.TER, inicio=time(8, 0), fim=time(12, 0), turno=Turno.MANHA
+    ),
+    TurnoConfig(
+        turma="Turma 2", dia=DiaSemana.TER, inicio=time(14, 0), fim=time(18, 0), turno=Turno.TARDE
+    ),
+    TurnoConfig(
+        turma="Turma 2", dia=DiaSemana.QUI, inicio=time(8, 0), fim=time(12, 0), turno=Turno.MANHA
+    ),
+    TurnoConfig(
+        turma="Turma 2", dia=DiaSemana.QUI, inicio=time(14, 0), fim=time(18, 0), turno=Turno.TARDE
+    ),
+    TurnoConfig(
+        turma="Turma 2", dia=DiaSemana.SEX, inicio=time(14, 0), fim=time(18, 0), turno=Turno.TARDE
+    ),
 ]
 
 # Mapeamento de weekday() do Python para DiaSemana

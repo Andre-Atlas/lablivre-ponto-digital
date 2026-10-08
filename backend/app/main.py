@@ -7,17 +7,15 @@ from app.api.v1 import router_auth
 from app.api.v1 import router_checkin
 from app.api.v1 import router_admin
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Inicialização do banco de dados (se necessário)
     yield
     # Limpeza
 
-app = FastAPI(
-    title="Ponto Digital API",
-    version=settings.APP_VERSION,
-    lifespan=lifespan
-)
+
+app = FastAPI(title="Ponto Digital API", version=settings.APP_VERSION, lifespan=lifespan)
 
 # CORS (allow all in dev)
 app.add_middleware(
@@ -31,6 +29,7 @@ app.add_middleware(
 app.include_router(router_auth.router, prefix="/api/v1")
 app.include_router(router_checkin.router, prefix="/api/v1")
 app.include_router(router_admin.router, prefix="/api/v1")
+
 
 @app.get("/api/v1/health")
 async def health():

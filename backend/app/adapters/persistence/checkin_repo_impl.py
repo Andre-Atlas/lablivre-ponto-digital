@@ -6,7 +6,11 @@ from uuid import UUID
 from app.domain.ports.checkin_repository import CheckInRepository
 from app.domain.models import CheckIn, CheckInDuplicata
 from app.domain.enums import StatusCheckin
-from app.adapters.persistence.orm_models import Checkin as CheckinORM, CheckinDuplicata as DuplicataORM
+from app.adapters.persistence.orm_models import (
+    Checkin as CheckinORM,
+    CheckinDuplicata as DuplicataORM,
+)
+
 
 class CheckInRepositoryImpl(CheckInRepository):
     def __init__(self, session: AsyncSession):
@@ -14,12 +18,12 @@ class CheckInRepositoryImpl(CheckInRepository):
 
     async def buscar_por_turno(self, user_id: UUID, turno_referencia: str) -> Optional[CheckIn]:
         stmt = select(CheckinORM).where(
-            CheckinORM.user_id == user_id,
-            CheckinORM.turno_referencia == turno_referencia
+            CheckinORM.user_id == user_id, CheckinORM.turno_referencia == turno_referencia
         )
         result = await self.session.execute(stmt)
         orm = result.scalars().first()
-        if not orm: return None
+        if not orm:
+            return None
         return self._to_domain(orm)
 
     async def criar(self, checkin: CheckIn) -> CheckIn:
@@ -34,7 +38,7 @@ class CheckInRepositoryImpl(CheckInRepository):
             status=checkin.status,
             turno_referencia=checkin.turno_referencia,
             exportado_sheets=checkin.exportado_sheets,
-            criado_em=checkin.criado_em
+            criado_em=checkin.criado_em,
         )
         self.session.add(orm)
         await self.session.flush()
@@ -49,7 +53,7 @@ class CheckInRepositoryImpl(CheckInRepository):
             hora_tentativa=duplicata.hora_tentativa,
             ip_publico=duplicata.ip_publico,
             motivo=duplicata.motivo,
-            criado_em=duplicata.criado_em
+            criado_em=duplicata.criado_em,
         )
         self.session.add(orm)
         await self.session.flush()
@@ -80,5 +84,5 @@ class CheckInRepositoryImpl(CheckInRepository):
             status=StatusCheckin(orm.status),
             turno_referencia=orm.turno_referencia,
             exportado_sheets=orm.exportado_sheets,
-            criado_em=orm.criado_em
+            criado_em=orm.criado_em,
         )

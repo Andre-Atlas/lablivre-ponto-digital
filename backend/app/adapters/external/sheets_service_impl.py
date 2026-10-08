@@ -6,10 +6,13 @@ from app.domain.ports.sheets_service import SheetsService
 from app.domain.models import CheckIn, User, Device
 from app.config import settings
 
+
 class SheetsServiceImpl(SheetsService):
     def __init__(self):
         # Conecta usando a conta de serviço
-        creds_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "..", "credentials.json")
+        creds_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "..", "credentials.json"
+        )
         self.gc = None
         if os.path.exists(creds_path) and settings.GOOGLE_SHEET_ID:
             try:
@@ -30,22 +33,30 @@ class SheetsServiceImpl(SheetsService):
     def _sync_export(self, nome_aba: str, checkin: CheckIn, user: User, device: Device) -> bool:
         try:
             sh = self.gc.open_by_key(settings.GOOGLE_SHEET_ID)
-            
+
             # Tenta pegar a aba com o mês atual, ex: "Alunos_09_2026"
             mes_ano = datetime.now().strftime("%m_%Y")
             nome_aba_completo = f"{nome_aba}_{mes_ano}"
-            
+
             try:
                 worksheet = sh.worksheet(nome_aba_completo)
             except gspread.exceptions.WorksheetNotFound:
                 # Se a aba não existe, cria com os cabeçalhos
                 worksheet = sh.add_worksheet(title=nome_aba_completo, rows=1000, cols=10)
                 cabecalhos = [
-                    "ID Check-in", "Nome", "E-mail", "Turma/Equipe", "Patrimônio",
-                    "Data/Hora", "Turno", "Status", "IP", "MAC Address"
+                    "ID Check-in",
+                    "Nome",
+                    "E-mail",
+                    "Turma/Equipe",
+                    "Patrimônio",
+                    "Data/Hora",
+                    "Turno",
+                    "Status",
+                    "IP",
+                    "MAC Address",
                 ]
                 worksheet.append_row(cabecalhos)
-            
+
             # Prepara a linha de dados
             hora_formatada = checkin.hora_checkin.strftime("%Y-%m-%d %H:%M:%S")
             row = [
@@ -58,9 +69,9 @@ class SheetsServiceImpl(SheetsService):
                 checkin.turno_referencia,
                 checkin.status.value,
                 checkin.ip_publico or "",
-                device.mac_address
+                device.mac_address,
             ]
-            
+
             worksheet.append_row(row)
             return True
         except Exception as e:

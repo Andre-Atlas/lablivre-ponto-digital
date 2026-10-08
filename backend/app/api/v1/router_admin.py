@@ -25,6 +25,7 @@ from app.utils.security import get_password_hash
 
 router = APIRouter(prefix="/admin", tags=["Administração"])
 
+
 class UserAdminResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: UUID
@@ -34,9 +35,9 @@ class UserAdminResponse(BaseModel):
     role: RoleAdmin | None = None
     admin_aprovado: bool
 
+
 async def require_admin(
-    payload: dict = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    payload: dict = Depends(get_current_user), db: AsyncSession = Depends(get_db)
 ):
     user_id_str = payload.get("sub")
     if not user_id_str:
@@ -56,20 +57,17 @@ async def require_admin(
         raise HTTPException(status_code=403, detail="Acesso restrito a administradores.")
     return current_user
 
+
 @router.get("/usuarios", response_model=list[UserAdminResponse])
-async def list_usuarios(
-    db: AsyncSession = Depends(get_db),
-    admin: User = Depends(require_admin)
-):
+async def list_usuarios(db: AsyncSession = Depends(get_db), admin: User = Depends(require_admin)):
     result = await db.execute(select(UserModel))
     users = result.scalars().all()
     return users  # Let FastAPI serialize it. We just need from_attributes=True in schema.
 
+
 @router.post("/usuarios/{user_id}/aprovar")
 async def aprovar_usuario(
-    user_id: UUID,
-    db: AsyncSession = Depends(get_db),
-    admin: User = Depends(require_admin)
+    user_id: UUID, db: AsyncSession = Depends(get_db), admin: User = Depends(require_admin)
 ):
     result = await db.execute(select(UserModel).where(UserModel.id == user_id))
     user_model = result.scalars().first()
@@ -82,19 +80,18 @@ async def aprovar_usuario(
     return {"message": f"Usuário {user_model.nome} aprovado com sucesso."}
 
 
-
-
 class CreateAdminRequest(BaseModel):
     nome: str
     email: str
     senha: str
     role: str = "STAFF"
 
+
 @router.post("/usuarios")
 async def create_admin(
     request: CreateAdminRequest,
     db: AsyncSession = Depends(get_db),
-    admin: User = Depends(require_admin)
+    admin: User = Depends(require_admin),
 ):
     # Verify email uniqueness
     existing = await db.execute(select(UserModel).where(UserModel.email == request.email))
@@ -110,17 +107,16 @@ async def create_admin(
         oauth_provider="manual",
         oauth_sub=f"manual_{uuid.uuid4()}",
         admin_aprovado=True,
-        senha_hash=get_password_hash(request.senha)
+        senha_hash=get_password_hash(request.senha),
     )
     db.add(new_admin)
     await db.commit()
     return {"message": f"Administrador {new_admin.nome} criado com sucesso."}
 
+
 @router.delete("/usuarios/{user_id}")
 async def delete_usuario(
-    user_id: UUID,
-    db: AsyncSession = Depends(get_db),
-    admin: User = Depends(require_admin)
+    user_id: UUID, db: AsyncSession = Depends(get_db), admin: User = Depends(require_admin)
 ):
     result = await db.execute(select(UserModel).where(UserModel.id == user_id))
     user_model = result.scalars().first()
@@ -136,8 +132,6 @@ async def delete_usuario(
     return {"message": "Usuário excluído com sucesso."}
 
 
-
-
 @router.get("/export/usuarios")
 async def export_usuarios(db: AsyncSession = Depends(get_db), admin: User = Depends(require_admin)):
     result = await db.execute(select(UserModel))
@@ -148,21 +142,29 @@ async def export_usuarios(db: AsyncSession = Depends(get_db), admin: User = Depe
     writer.writerow(["ID", "Nome", "Email", "Tipo", "Aprovado", "Turma", "Máquina", "Criado Em"])
 
     for u in users:
-        writer.writerow([
-            str(u.id), u.nome, u.email, u.tipo.value if u.tipo else "",
-            "Sim" if u.admin_aprovado else "Nao", u.turma_ou_equipe or "", u.patrimonio or "",
-            u.criado_em.replace(tzinfo=timezone.utc).astimezone(timezone(timedelta(hours=-3))).strftime("%Y-%m-%d %H:%M:%S") if u.criado_em else ""
-        ])
+        writer.writerow(
+            [
+                str(u.id),
+                u.nome,
+                u.email,
+                u.tipo.value if u.tipo else "",
+                "Sim" if u.admin_aprovado else "Nao",
+                u.turma_ou_equipe or "",
+                u.patrimonio or "",
+                u.criado_em.replace(tzinfo=timezone.utc)
+                .astimezone(timezone(timedelta(hours=-3)))
+                .strftime("%Y-%m-%d %H:%M:%S")
+                if u.criado_em
+                else "",
+            ]
+        )
 
     output_csv.seek(0)
     return StreamingResponse(
         iter([output_csv.getvalue()]),
         media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=usuarios_lablivre.csv"}
+        headers={"Content-Disposition": "attachment; filename=usuarios_lablivre.csv"},
     )
-
-
-
 
 
 @router.get("/export/checkins")
@@ -175,7 +177,7 @@ async def export_checkins(
     turma: str | None = None,
     turno: str | None = None,
     db: AsyncSession = Depends(get_db),
-    admin: User = Depends(require_admin)
+    admin: User = Depends(require_admin),
 ):
     query = select(CheckInModel, UserModel).join(UserModel, CheckInModel.user_id == UserModel.id)
     if tipo:
@@ -188,8 +190,9 @@ async def export_checkins(
         # Approximate filter in DB for the specific day (UTC boundaries might slightly shift, but it's okay for general query)
         start_date = datetime(ano, mes, dia, tzinfo=timezone.utc)
         end_date = start_date + timedelta(days=1)
-        query = query.where(CheckInModel.hora_checkin >= start_date, CheckInModel.hora_checkin < end_date)
-
+        query = query.where(
+            CheckInModel.hora_checkin >= start_date, CheckInModel.hora_checkin < end_date
+        )
 
     now_utc = datetime.now(timezone.utc)
     target_year = ano if ano else now_utc.year
@@ -206,7 +209,9 @@ async def export_checkins(
         ws_alunos = wb.create_sheet("Alunos")
 
         ws_staff.append(["Nome", "Email", "Máquina", "Data/Hora", "Turno", "Status", "IP"])
-        ws_alunos.append(["Nome", "Email", "Turma", "Máquina", "Data/Hora", "Turno", "Status", "IP"])
+        ws_alunos.append(
+            ["Nome", "Email", "Turma", "Máquina", "Data/Hora", "Turno", "Status", "IP"]
+        )
 
         # Organize checkins by user and day/turno
         checkins_by_user: dict = {}
@@ -234,14 +239,25 @@ async def export_checkins(
                 # Just dump raw checkins for Staff
                 for checkin in user_checkins:
                     # Filter by month/year (approx)
-                    if checkin.hora_checkin.year == target_year and checkin.hora_checkin.month == target_month:
-                        ws_staff.append([
-                            user.nome, user.email, user.patrimonio or "",
-                            checkin.hora_checkin.replace(tzinfo=timezone.utc).astimezone(timezone(timedelta(hours=-3))).strftime("%Y-%m-%d %H:%M:%S") if checkin.hora_checkin else "",
-                            checkin.turno_referencia or "",
-                            checkin.status.value if checkin.status else "",
-                            checkin.ip_publico or ""
-                        ])
+                    if (
+                        checkin.hora_checkin.year == target_year
+                        and checkin.hora_checkin.month == target_month
+                    ):
+                        ws_staff.append(
+                            [
+                                user.nome,
+                                user.email,
+                                user.patrimonio or "",
+                                checkin.hora_checkin.replace(tzinfo=timezone.utc)
+                                .astimezone(timezone(timedelta(hours=-3)))
+                                .strftime("%Y-%m-%d %H:%M:%S")
+                                if checkin.hora_checkin
+                                else "",
+                                checkin.turno_referencia or "",
+                                checkin.status.value if checkin.status else "",
+                                checkin.ip_publico or "",
+                            ]
+                        )
             else:
                 # ALUNO: Calculate Faltas
                 if not user.turma_ou_equipe:
@@ -277,25 +293,41 @@ async def export_checkins(
                         # turno_referencia is usually "{YYYY-MM-DD}_{MANHA/TARDE}"
                         expected_ref = f"{current_date.strftime('%Y-%m-%d')}_{shift.turno.value}"
 
-                        found_checkin = next((c for c in user_checkins if c.turno_referencia == expected_ref), None)
+                        found_checkin = next(
+                            (c for c in user_checkins if c.turno_referencia == expected_ref), None
+                        )
 
                         if found_checkin:
-                            ws_alunos.append([
-                                user.nome, user.email, user.turma_ou_equipe, user.patrimonio or "",
-                                found_checkin.hora_checkin.replace(tzinfo=timezone.utc).astimezone(timezone(timedelta(hours=-3))).strftime("%Y-%m-%d %H:%M:%S") if found_checkin.hora_checkin else "",
-                                expected_ref,
-                                found_checkin.status.value if found_checkin.status else "",
-                                found_checkin.ip_publico or ""
-                            ])
+                            ws_alunos.append(
+                                [
+                                    user.nome,
+                                    user.email,
+                                    user.turma_ou_equipe,
+                                    user.patrimonio or "",
+                                    found_checkin.hora_checkin.replace(tzinfo=timezone.utc)
+                                    .astimezone(timezone(timedelta(hours=-3)))
+                                    .strftime("%Y-%m-%d %H:%M:%S")
+                                    if found_checkin.hora_checkin
+                                    else "",
+                                    expected_ref,
+                                    found_checkin.status.value if found_checkin.status else "",
+                                    found_checkin.ip_publico or "",
+                                ]
+                            )
                         else:
                             # Falta!
-                            ws_alunos.append([
-                                user.nome, user.email, user.turma_ou_equipe, user.patrimonio or "",
-                                current_date.strftime("%Y-%m-%d"),
-                                expected_ref,
-                                "FALTA",
-                                ""
-                            ])
+                            ws_alunos.append(
+                                [
+                                    user.nome,
+                                    user.email,
+                                    user.turma_ou_equipe,
+                                    user.patrimonio or "",
+                                    current_date.strftime("%Y-%m-%d"),
+                                    expected_ref,
+                                    "FALTA",
+                                    "",
+                                ]
+                            )
 
         output_excel = io.BytesIO()
         wb.save(output_excel)
@@ -304,7 +336,9 @@ async def export_checkins(
         return StreamingResponse(
             output_excel,
             media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            headers={"Content-Disposition": f"attachment; filename=checkins_lablivre_{target_year}_{target_month:02d}.xlsx"}
+            headers={
+                "Content-Disposition": f"attachment; filename=checkins_lablivre_{target_year}_{target_month:02d}.xlsx"
+            },
         )
     else:
         # Default CSV
@@ -313,40 +347,53 @@ async def export_checkins(
         writer.writerow(["Nome", "Email", "Turma", "Máquina", "Data/Hora", "Turno", "Status", "IP"])
 
         for checkin, user in rows:
-            writer.writerow([
-                user.nome, user.email, user.turma_ou_equipe or "", user.patrimonio or "",
-                checkin.hora_checkin.replace(tzinfo=timezone.utc).astimezone(timezone(timedelta(hours=-3))).strftime("%Y-%m-%d %H:%M:%S") if checkin.hora_checkin else "",
-                checkin.turno_referencia or "",
-                checkin.status.value if checkin.status else "",
-                checkin.ip_publico or ""
-            ])
+            writer.writerow(
+                [
+                    user.nome,
+                    user.email,
+                    user.turma_ou_equipe or "",
+                    user.patrimonio or "",
+                    checkin.hora_checkin.replace(tzinfo=timezone.utc)
+                    .astimezone(timezone(timedelta(hours=-3)))
+                    .strftime("%Y-%m-%d %H:%M:%S")
+                    if checkin.hora_checkin
+                    else "",
+                    checkin.turno_referencia or "",
+                    checkin.status.value if checkin.status else "",
+                    checkin.ip_publico or "",
+                ]
+            )
 
         output_csv.seek(0)
         return StreamingResponse(
             iter([output_csv.getvalue()]),
             media_type="text/csv",
-            headers={"Content-Disposition": "attachment; filename=checkins_lablivre.csv"}
+            headers={"Content-Disposition": "attachment; filename=checkins_lablivre.csv"},
         )
 
 
 class JustificarRequest(BaseModel):
     data: str  # YYYY-MM-DD
-    turno: str # MANHA or TARDE
+    turno: str  # MANHA or TARDE
+
 
 class RoleUpdateRequest(BaseModel):
     role: RoleAdmin
+
 
 @router.post("/usuarios/{user_id}/role")
 async def create_user_role(
     user_id: UUID,
     request: RoleUpdateRequest,
     current_admin: UserModel = Depends(require_admin),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     # Regras de elevação de privilégio:
     # Apenas SUPER_ADMIN pode dar SUPER_ADMIN
     if request.role == RoleAdmin.SUPER_ADMIN and current_admin.role != RoleAdmin.SUPER_ADMIN:
-        raise HTTPException(status_code=403, detail="Apenas Super Admins podem criar outros Super Admins")
+        raise HTTPException(
+            status_code=403, detail="Apenas Super Admins podem criar outros Super Admins"
+        )
 
     result = await db.execute(select(UserModel).where(UserModel.id == user_id))
     user = result.scalars().first()
@@ -364,7 +411,7 @@ async def justificar_falta(
     user_id: UUID,
     request: JustificarRequest,
     current_admin: UserModel = Depends(require_admin),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     # Verify user exists
     user_result = await db.execute(select(UserModel).where(UserModel.id == user_id))
@@ -375,10 +422,11 @@ async def justificar_falta(
     turno_ref = f"{request.data}_{request.turno}"
 
     # Check if checkin already exists
-    existing = await db.execute(select(CheckInModel).where(
-        CheckInModel.user_id == user_id,
-        CheckInModel.turno_referencia == turno_ref
-    ))
+    existing = await db.execute(
+        select(CheckInModel).where(
+            CheckInModel.user_id == user_id, CheckInModel.turno_referencia == turno_ref
+        )
+    )
     checkin = existing.scalars().first()
 
     if checkin:
@@ -400,34 +448,35 @@ async def justificar_falta(
                 os_type="web",
                 hostname="Painel_Admin",
                 serial_number="N/A",
-                principal=True
+                principal=True,
             )
             db.add(dev)
             await db.flush()
 
-
         checkin = CheckInModel(
             user_id=user_id,
             device_id=dev.id,
-            hora_checkin=datetime.now(timezone.utc), # Audit time
+            hora_checkin=datetime.now(timezone.utc),  # Audit time
             status=StatusCheckin.JUSTIFICADO,
             turno_referencia=turno_ref,
-            ip_publico="0.0.0.0"
+            ip_publico="0.0.0.0",
         )
         db.add(checkin)
 
     await db.commit()
     return {"status": "sucesso", "mensagem": "Falta/Atraso justificado com sucesso."}
 
+
 class UpdateRoleRequest(BaseModel):
     role: str
+
 
 @router.put("/usuarios/{user_id}/role")
 async def update_user_role_put(
     user_id: str,
     request: UpdateRoleRequest,
     db: AsyncSession = Depends(get_db),
-    admin: UserModel = Depends(require_admin)
+    admin: UserModel = Depends(require_admin),
 ):
     if admin.role != RoleAdmin.SUPER_ADMIN:
         raise HTTPException(status_code=403, detail="Apenas Super Admins podem alterar cargos.")
@@ -444,33 +493,35 @@ async def update_user_role_put(
         raise HTTPException(status_code=400, detail="Role inválida.") from None
     return {"status": "ok"}
 
+
 class BulkIdsRequest(BaseModel):
     user_ids: list[UUID]
+
 
 @router.post("/usuarios/bulk-aprovar")
 async def bulk_aprovar_usuarios(
     request: BulkIdsRequest,
     current_admin: UserModel = Depends(require_admin),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     await db.execute(
-        update(UserModel)
-        .where(UserModel.id.in_(request.user_ids))
-        .values(admin_aprovado=True)
+        update(UserModel).where(UserModel.id.in_(request.user_ids)).values(admin_aprovado=True)
     )
     await db.commit()
     return {"message": f"{len(request.user_ids)} usuários aprovados"}
+
 
 class BulkJustificarRequest(BaseModel):
     user_ids: list[UUID]
     data: str  # YYYY-MM-DD
     turno: str
 
+
 @router.post("/usuarios/bulk-justificar")
 async def bulk_justificar_faltas(
     request: BulkJustificarRequest,
     current_admin: UserModel = Depends(require_admin),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     turno_ref = f"{request.data}_{request.turno}"
     count = 0
@@ -478,11 +529,13 @@ async def bulk_justificar_faltas(
 
     for uid in request.user_ids:
         # Check if checkin already exists
-        existing = await db.execute(select(CheckInModel).where(
-            CheckInModel.user_id == uid,
-            CheckInModel.turno_referencia == turno_ref,
-            CheckInModel.status != StatusCheckin.FALTA
-        ))
+        existing = await db.execute(
+            select(CheckInModel).where(
+                CheckInModel.user_id == uid,
+                CheckInModel.turno_referencia == turno_ref,
+                CheckInModel.status != StatusCheckin.FALTA,
+            )
+        )
         if existing.scalars().first():
             continue
 
@@ -497,7 +550,7 @@ async def bulk_justificar_faltas(
             ip_publico="127.0.0.1",
             status=StatusCheckin.JUSTIFICADO,
             turno_referencia=turno_ref,
-            mensagem="Justificado em massa pelo painel"
+            mensagem="Justificado em massa pelo painel",
         )
         db.add(checkin)
         count += 1
@@ -505,17 +558,19 @@ async def bulk_justificar_faltas(
     await db.commit()
     return {"message": f"{count} faltas justificadas"}
 
+
 class UpdateUserAdminRequest(BaseModel):
     turma_ou_equipe: str | None = None
     patrimonio: str | None = None
     tipo: TipoUsuario | None = None
+
 
 @router.put("/usuarios/{user_id}")
 async def admin_update_user(
     user_id: UUID,
     request: UpdateUserAdminRequest,
     current_admin: UserModel = Depends(require_admin),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     user_result = await db.execute(select(UserModel).where(UserModel.id == user_id))
     user = user_result.scalars().first()

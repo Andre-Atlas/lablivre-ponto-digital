@@ -4,6 +4,7 @@ from uuid import UUID
 
 from app.domain.enums import TipoUsuario
 
+
 class OnboardingRequest(BaseModel):
     oauth_provider: str
     oauth_token: str
@@ -15,11 +16,13 @@ class OnboardingRequest(BaseModel):
     device_hostname: Optional[str] = None
     device_serial: Optional[str] = None
 
+
 class OnboardingResponse(BaseModel):
     status: str
     access_token: str
     token_type: str = "bearer"
     user_id: UUID
+
 
 class RegisterRequest(BaseModel):
     nome: str
@@ -27,6 +30,7 @@ class RegisterRequest(BaseModel):
     senha: str
     turma: str
     numero_maquina: int
+
 
 class LoginRequest(BaseModel):
     email: str

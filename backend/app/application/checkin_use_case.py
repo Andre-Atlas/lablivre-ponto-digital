@@ -12,20 +12,25 @@ from app.domain.enums import TipoUsuario, StatusCheckin
 from app.domain.models import identificar_turno, calcular_status
 from app.api.schemas.checkin_schemas import CheckinRequest
 from app.domain.exceptions import (
-    UsuarioInativoError, UsuarioNaoAprovadoError, DispositivoNaoRegistradoError,
-    ForaDoRaioError, ForaTurnoError, DuplicataError
+    UsuarioInativoError,
+    UsuarioNaoAprovadoError,
+    DispositivoNaoRegistradoError,
+    ForaDoRaioError,
+    ForaTurnoError,
+    DuplicataError,
 )
 from app.config import settings
 
+
 class CheckinUseCase:
     def __init__(
-        self, 
-        checkin_repo: CheckInRepository, 
-        user_repo: UserRepository, 
-        device_repo: DeviceRepository, 
-        config_repo: ConfigRepository, 
-        sheets_service: SheetsService, 
-        geolocation_service: GeolocationService
+        self,
+        checkin_repo: CheckInRepository,
+        user_repo: UserRepository,
+        device_repo: DeviceRepository,
+        config_repo: ConfigRepository,
+        sheets_service: SheetsService,
+        geolocation_service: GeolocationService,
     ):
         self.checkin_repo = checkin_repo
         self.user_repo = user_repo
@@ -34,7 +39,9 @@ class CheckinUseCase:
         self.sheets_service = sheets_service
         self.geolocation_service = geolocation_service
 
-    async def executar(self, request: CheckinRequest, user_id: UUID, ip_publico: str) -> tuple[CheckIn, str, User, Device]:
+    async def executar(
+        self, request: CheckinRequest, user_id: UUID, ip_publico: str
+    ) -> tuple[CheckIn, str, User, Device]:
         user = await self.user_repo.buscar_por_id(user_id)
         if not user or not user.ativo:
             raise UsuarioInativoError("Usuário inativo")
@@ -53,29 +60,35 @@ class CheckinUseCase:
             if devices:
                 device = next((d for d in devices if d.os_type == "web"), devices[0])
             else:
-                raise DispositivoNaoRegistradoError("Nenhum dispositivo registrado para este usuário")
+                raise DispositivoNaoRegistradoError(
+                    "Nenhum dispositivo registrado para este usuário"
+                )
 
         # Passar lat_user e lng_user se fornecidos na requisição
         esta_no_raio, dist = await self.geolocation_service.validar_localizacao(
-            bssids=request.bssids or [], 
-            lat_centro=settings.GEOFENCING_LAT, 
-            lng_centro=settings.GEOFENCING_LNG, 
+            bssids=request.bssids or [],
+            lat_centro=settings.GEOFENCING_LAT,
+            lng_centro=settings.GEOFENCING_LNG,
             raio_metros=settings.GEOFENCING_RADIUS_METERS,
             lat_user=request.lat,
-            lng_user=request.lng
+            lng_user=request.lng,
         )
         if not esta_no_raio:
             raise ForaDoRaioError(dist)
 
         now = datetime.now(timezone.utc)
-        now_local = datetime.now() 
-        
+        now_local = datetime.now()
+
         turno = identificar_turno(user.turma_ou_equipe, now_local)
         # Desativado temporariamente:
         # if not turno and user.tipo == TipoUsuario.ALUNO:
         #     raise ForaTurnoError("Fora do horário de turno permitido")
 
-        turno_ref = f"{now_local.strftime('%Y-%m-%d')}_{turno.turno.value}" if turno else f"{now_local.strftime('%Y-%m-%d')}_STAFF"
+        turno_ref = (
+            f"{now_local.strftime('%Y-%m-%d')}_{turno.turno.value}"
+            if turno
+            else f"{now_local.strftime('%Y-%m-%d')}_STAFF"
+        )
 
         checkin_existente = await self.checkin_repo.buscar_por_turno(user.id, turno_ref)
         if checkin_existente:
@@ -87,12 +100,12 @@ class CheckinUseCase:
                 hora_tentativa=now,
                 motivo="DUPLICATA_MESMO_TURNO",
                 ip_publico=ip_publico,
-                criado_em=now
+                criado_em=now,
             )
             await self.checkin_repo.registrar_duplicata(duplicata)
             raise DuplicataError(checkin_existente.id, checkin_existente.hora_checkin)
 
-        carencia_str = await self.config_repo.buscar('CARENCIA_MINUTOS')
+        carencia_str = await self.config_repo.buscar("CARENCIA_MINUTOS")
         carencia_minutos = int(carencia_str) if carencia_str and carencia_str.isdigit() else 10
 
         status = StatusCheckin.PRESENTE
@@ -110,7 +123,7 @@ class CheckinUseCase:
             exportado_sheets=False,
             criado_em=now,
             ip_publico=ip_publico,
-            ssid=request.ssid
+            ssid=request.ssid,
         )
 
         novo_checkin = await self.checkin_repo.criar(novo_checkin)
@@ -123,7 +136,7 @@ class CheckinUseCase:
                 sucesso = await self.sheets_service.exportar_checkin_aluno(checkin, user, device)
             else:
                 sucesso = await self.sheets_service.exportar_checkin_staff(checkin, user, device)
-            
+
             if sucesso:
                 await self.checkin_repo.marcar_exportado(checkin.id)
         except Exception as e:
