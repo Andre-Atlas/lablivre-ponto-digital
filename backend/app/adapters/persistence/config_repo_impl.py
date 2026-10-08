@@ -25,7 +25,11 @@ class ConfigRepositoryImpl(ConfigRepository):
         return None
 
     async def salvar(self, chave: str, valor: str, admin_id: UUID | None = None) -> Config:
-        raise NotImplementedError("Configuração ainda não implementada")  # Para uso futuro do dashboard
+        raise NotImplementedError(
+            "Configuração ainda não implementada"
+        )  # Para uso futuro do dashboard
 
     async def listar(self) -> list[Config]:
-        raise NotImplementedError("Listagem de configurações ainda não implementada")  # Para uso futuro do dashboard
+        raise NotImplementedError(
+            "Listagem de configurações ainda não implementada"
+        )  # Para uso futuro do dashboard

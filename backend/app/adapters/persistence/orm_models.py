@@ -26,12 +26,6 @@ class Base(DeclarativeBase):
     pass
 
 
-
-
-
-
-
-
 class User(Base):
     __tablename__ = "users"
 

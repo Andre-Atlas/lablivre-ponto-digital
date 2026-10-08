@@ -82,7 +82,9 @@ class CheckInRepositoryImpl(CheckInRepository):
             hora_checkin=orm.hora_checkin,
             ip_publico=orm.ip_publico,
             ssid=orm.ssid,
-            bssids=[item for item in orm.bssids if isinstance(item, str)] if isinstance(orm.bssids, list) else [],
+            bssids=[item for item in orm.bssids if isinstance(item, str)]
+            if isinstance(orm.bssids, list)
+            else [],
             status=StatusCheckin(orm.status),
             turno_referencia=orm.turno_referencia,
             exportado_sheets=orm.exportado_sheets,

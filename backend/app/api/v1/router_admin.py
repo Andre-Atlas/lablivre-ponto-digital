@@ -60,7 +60,9 @@ async def require_admin(
 
 
 @router.get("/usuarios", response_model=list[UserAdminResponse])
-async def list_usuarios(db: AsyncSession = Depends(get_db), admin: User = Depends(require_admin)) -> Any:
+async def list_usuarios(
+    db: AsyncSession = Depends(get_db), admin: User = Depends(require_admin)
+) -> Any:
     result = await db.execute(select(UserModel))
     users = result.scalars().all()
     return users  # Let FastAPI serialize it. We just need from_attributes=True in schema.
@@ -134,7 +136,9 @@ async def delete_usuario(
 
 
 @router.get("/export/usuarios")
-async def export_usuarios(db: AsyncSession = Depends(get_db), admin: User = Depends(require_admin)) -> Any:
+async def export_usuarios(
+    db: AsyncSession = Depends(get_db), admin: User = Depends(require_admin)
+) -> Any:
     result = await db.execute(select(UserModel))
     users = result.scalars().all()
 

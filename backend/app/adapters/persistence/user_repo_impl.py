@@ -60,9 +60,7 @@ class UserRepositoryImpl(UserRepository):
             await self.session.flush()
         return user
 
-    async def listar(
-        self, tipo: TipoUsuario | None = None, turma: str | None = None
-    ) -> list[User]:
+    async def listar(self, tipo: TipoUsuario | None = None, turma: str | None = None) -> list[User]:
         stmt = select(UserORM)
         if tipo:
             stmt = stmt.where(UserORM.tipo == tipo)
