@@ -4,7 +4,13 @@ from typing import Any
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.v1 import router_admin, router_auth, router_checkin, router_evaluations
+from app.api.v1 import (
+    router_admin,
+    router_auth,
+    router_certificates,
+    router_checkin,
+    router_evaluations,
+)
 from app.config import settings
 
 
@@ -29,6 +35,7 @@ app.add_middleware(
 app.include_router(router_auth.router, prefix="/api/v1")
 app.include_router(router_checkin.router, prefix="/api/v1")
 app.include_router(router_admin.router, prefix="/api/v1")
+app.include_router(router_certificates.router, prefix="/api/v1")
 app.include_router(router_evaluations.router, prefix="/api/v1")
 
 

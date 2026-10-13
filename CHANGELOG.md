@@ -8,6 +8,12 @@
   - **Relatório semanal** exportável (CSV/Excel) com o nível de cada aluno por LO e os comentários.
   - Mentor restrito à própria turma; dados de avaliação visíveis apenas a mentores/administradores. Co-avaliação: o último nível prevalece por LO e os comentários de cada mentor são mantidos.
   - Novos endpoints: `GET/POST /api/v1/admin/los`, `PUT /api/v1/admin/los/{id}`, `GET /api/v1/admin/avaliacoes/config`, `GET /api/v1/admin/avaliacoes/prefill`, `GET/POST /api/v1/admin/avaliacoes`, `GET /api/v1/admin/avaliacoes/dashboard`, `GET /api/v1/admin/avaliacoes/export`.
+- **Atestados Médicos**: Administradores podem registrar atestados médicos (documento + período contíguo) para alunos (`ALUNO`). Ao salvar, todos os turnos esperados do período sem check-in presente/atrasado real (FALTA ou já JUSTIFICADO) são marcados como justificados e **vinculados** ao atestado.
+  - Vínculo persistente dia↔atestado (tabela `certificate_days`), rastreável nos dois sentidos e exibido no painel.
+  - Documento armazenado no PostgreSQL (BYTEA, até 10 MB) e acessível apenas a administradores.
+  - As exportações **CSV e Excel** passam a refletir os turnos justificados por atestado (o CSV foi reformulado para enumerar os turnos esperados do aluno, como o Excel).
+  - Revogação de atestado reverte os turnos justificados exclusivamente por ele.
+  - Novos endpoints: `POST/GET /api/v1/admin/certificados`, `GET /api/v1/admin/certificados/{id}`, `GET .../{id}/documento`, `POST .../{id}/revogar`.
 - **Sistema de Permissões**: Adicionado modelo robusto com as roles `SUPER_ADMIN`, `ADMIN`, `STAFF` e `ALUNO`.
 - **Desktop App (Python/Flet)**:
   - Adicionado suporte a inicialização automática com o sistema (Auto-startup).

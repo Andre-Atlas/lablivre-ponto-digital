@@ -1,14 +1,16 @@
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 
 from sqlalchemy import (
     JSON,
     Boolean,
+    Date,
     DateTime,
     ForeignKey,
     Index,
     Integer,
+    LargeBinary,
     String,
     Text,
     UniqueConstraint,
@@ -20,7 +22,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
-from app.domain.enums import RoleAdmin, StatusCheckin, TipoUsuario
+from app.domain.enums import CertificateStatus, RoleAdmin, StatusCheckin, TipoUsuario
 
 
 class Base(DeclarativeBase):
@@ -148,6 +150,72 @@ class Admin(Base):
     oauth_sub: Mapped[str] = mapped_column(String(255), nullable=False)
     senha_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
     criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class MedicalCertificate(Base):
+    __tablename__ = "medical_certificates"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    periodo_inicio: Mapped[date] = mapped_column(Date, nullable=False)
+    periodo_fim: Mapped[date] = mapped_column(Date, nullable=False)
+    documento: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    documento_filename: Mapped[str] = mapped_column(String(255), nullable=False)
+    documento_content_type: Mapped[str] = mapped_column(String(100), nullable=False)
+    documento_tamanho: Mapped[int] = mapped_column(Integer, nullable=False)
+    observacao: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[CertificateStatus] = mapped_column(
+        SAEnum(CertificateStatus),
+        default=CertificateStatus.ACTIVE,
+        server_default="ACTIVE",
+        nullable=False,
+    )
+    registrado_por: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    revogado_por: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    motivo_revogacao: Mapped[str | None] = mapped_column(Text, nullable=True)
+    criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    revogado_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    dias: Mapped[list["CertificateDay"]] = relationship(
+        back_populates="certificate", cascade="all, delete-orphan", passive_deletes=True
+    )
+
+    __table_args__ = (
+        Index("ix_medical_certificates_user", "user_id"),
+        Index("ix_medical_certificates_user_periodo", "user_id", "periodo_inicio", "periodo_fim"),
+        Index("ix_medical_certificates_status", "status"),
+    )
+
+
+class CertificateDay(Base):
+    __tablename__ = "certificate_days"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    certificate_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("medical_certificates.id", ondelete="CASCADE"), nullable=False
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    data: Mapped[date] = mapped_column(Date, nullable=False)
+    turno: Mapped[str] = mapped_column(String(50), nullable=False)
+    turno_referencia: Mapped[str] = mapped_column(String(50), nullable=False)
+    ativo: Mapped[bool] = mapped_column(Boolean, default=True, server_default="1", nullable=False)
+    criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    certificate: Mapped["MedicalCertificate"] = relationship(back_populates="dias")
+
+    __table_args__ = (
+        UniqueConstraint("certificate_id", "turno_referencia", name="uq_certificate_day"),
+        Index("ix_certificate_days_lookup", "user_id", "turno_referencia", "ativo"),
+        Index("ix_certificate_days_certificate", "certificate_id"),
+    )
 
 
 class Config(Base):

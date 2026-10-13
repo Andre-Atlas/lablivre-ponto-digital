@@ -22,6 +22,13 @@ class RoleAdmin(str, Enum):
     NONE = "NONE"
 
 
+class CertificateStatus(str, Enum):
+    """Estado de um atestado médico."""
+
+    ACTIVE = "ACTIVE"
+    REVOKED = "REVOKED"
+
+
 class DiaSemana(str, Enum):
     SEG = "SEG"
     TER = "TER"

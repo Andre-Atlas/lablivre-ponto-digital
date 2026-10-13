@@ -22,6 +22,7 @@ O **Ponto Digital Multiplataforma** é o sistema oficial de registro de frequên
 * **Exportação Avançada (Relatórios):** Geração de planilhas Excel e CSV customizadas (Filtráveis por: Data Específica, Turma/Equipe, Turno, Tipo de Usuário).
 * **Gestão de Usuários:** Edição de perfil de qualquer aluno (Turma, Número de Patrimônio da Máquina alocada, Nível de Acesso).
 * **Avaliação Semanal de LOs:** Mentores avaliam cada aluno por semana atribuindo níveis (1–4) aos Objetivos de Aprendizagem (Learning Outcomes), com comentários e pré-preenchimento dos últimos níveis. Inclui gestão do catálogo de LOs, dashboard por turma/semana (avaliados/pendentes, heatmap, regressões) e exportação do relatório semanal (CSV/Excel).
+* **Atestados Médicos:** Registro de atestados (documento + período) para alunos. Um único atestado justifica a ausência de vários dias, mantendo-se vinculado a cada turno justificado; as faltas cobertas aparecem como **Justificado** nas exportações (CSV e Excel). Documentos ficam acessíveis apenas a administradores.
 
 ---
 
