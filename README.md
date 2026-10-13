@@ -21,6 +21,7 @@ O **Ponto Digital Multiplataforma** é o sistema oficial de registro de frequên
 * **Ações em Massa (Bulk Actions):** Autorização ou Justificativa de ponto de vários usuários com 1 único clique via Checkboxes.
 * **Exportação Avançada (Relatórios):** Geração de planilhas Excel e CSV customizadas (Filtráveis por: Data Específica, Turma/Equipe, Turno, Tipo de Usuário).
 * **Gestão de Usuários:** Edição de perfil de qualquer aluno (Turma, Número de Patrimônio da Máquina alocada, Nível de Acesso).
+* **Avaliação Semanal de LOs:** Mentores avaliam cada aluno por semana atribuindo níveis (1–4) aos Objetivos de Aprendizagem (Learning Outcomes), com comentários e pré-preenchimento dos últimos níveis. Inclui gestão do catálogo de LOs, dashboard por turma/semana (avaliados/pendentes, heatmap, regressões) e exportação do relatório semanal (CSV/Excel).
 
 ---
 

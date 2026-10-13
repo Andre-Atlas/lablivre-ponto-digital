@@ -8,6 +8,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Index,
+    Integer,
     String,
     Text,
     UniqueConstraint,
@@ -182,3 +183,99 @@ class BssidAllowlist(Base):
     descricao: Mapped[str | None] = mapped_column(String(255), nullable=True)
     ativo: Mapped[bool] = mapped_column(Boolean, default=True)
     criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class LearningOutcome(Base):
+    __tablename__ = "learning_outcomes"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    numero: Mapped[int] = mapped_column(Integer, nullable=False)
+    nome: Mapped[str] = mapped_column(String(255), nullable=False)
+    descricao: Mapped[str | None] = mapped_column(Text, nullable=True)
+    ativo: Mapped[bool] = mapped_column(Boolean, default=True, server_default="1", nullable=False)
+    ordem: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    atualizado_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    __table_args__ = (
+        UniqueConstraint("numero", name="uq_lo_numero"),
+        Index("ix_learning_outcomes_ativo", "ativo"),
+    )
+
+
+class WeeklyEvaluation(Base):
+    __tablename__ = "lo_evaluations"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    semana: Mapped[int] = mapped_column(Integer, nullable=False)
+    turma: Mapped[str] = mapped_column(String(100), nullable=False)
+    criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    atualizado_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    niveis: Mapped[list["EvaluationLevel"]] = relationship(
+        back_populates="evaluation", cascade="all, delete-orphan", passive_deletes=True
+    )
+    comentarios: Mapped[list["EvaluationComment"]] = relationship(
+        back_populates="evaluation", cascade="all, delete-orphan", passive_deletes=True
+    )
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "semana", name="uq_evaluation_user_semana"),
+        Index("ix_evaluations_turma_semana", "turma", "semana"),
+    )
+
+
+class EvaluationLevel(Base):
+    __tablename__ = "lo_evaluation_levels"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    evaluation_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("lo_evaluations.id", ondelete="CASCADE"), nullable=False
+    )
+    lo_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("learning_outcomes.id", ondelete="RESTRICT"), nullable=False
+    )
+    nivel: Mapped[int] = mapped_column(Integer, nullable=False)
+    mentor_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    atualizado_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    evaluation: Mapped["WeeklyEvaluation"] = relationship(back_populates="niveis")
+
+    __table_args__ = (
+        UniqueConstraint("evaluation_id", "lo_id", name="uq_level_evaluation_lo"),
+        Index("ix_evaluation_levels_lo", "lo_id"),
+    )
+
+
+class EvaluationComment(Base):
+    __tablename__ = "lo_evaluation_comments"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    evaluation_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("lo_evaluations.id", ondelete="CASCADE"), nullable=False
+    )
+    mentor_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    mentor_nome: Mapped[str] = mapped_column(String(255), nullable=False)
+    texto: Mapped[str] = mapped_column(Text, nullable=False)
+    atualizado_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    evaluation: Mapped["WeeklyEvaluation"] = relationship(back_populates="comentarios")
+
+    __table_args__ = (
+        UniqueConstraint("evaluation_id", "mentor_id", name="uq_comment_evaluation_mentor"),
+    )

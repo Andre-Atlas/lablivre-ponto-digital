@@ -7,7 +7,7 @@ Inclui funções de negócio para identificação de turnos e cálculo de status
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime, time
+from datetime import date, datetime, time
 from uuid import UUID
 
 from .enums import DiaSemana, RoleAdmin, StatusCheckin, TipoUsuario, Turno
@@ -212,3 +212,136 @@ def calcular_status(
     if minutos_atraso <= carencia_minutos:
         return StatusCheckin.PRESENTE
     return StatusCheckin.ATRASADO
+
+
+# ──────────────────────────────────────────────
+# Avaliação Semanal de Learning Outcomes (LOs)
+# ──────────────────────────────────────────────
+
+NIVEL_MIN = 1
+NIVEL_MAX = 4
+NUM_SEMANAS_PADRAO = 12
+
+# Chaves usadas na tabela `config` para a configuração do programa de avaliação.
+CFG_DATA_INICIO = "lo_eval_data_inicio"
+CFG_NUM_SEMANAS = "lo_eval_num_semanas"
+
+
+@dataclass
+class LearningOutcome:
+    """Objetivo de aprendizagem (LO) do catálogo."""
+
+    id: UUID
+    numero: int
+    nome: str
+    ativo: bool
+    ordem: int
+    criado_em: datetime
+    atualizado_em: datetime
+    descricao: str | None = None
+
+
+@dataclass
+class EvaluationLevel:
+    """Nível (1–4) atribuído a um LO dentro de uma avaliação semanal."""
+
+    id: UUID
+    evaluation_id: UUID
+    lo_id: UUID
+    nivel: int
+    atualizado_em: datetime
+    mentor_id: UUID | None = None
+
+
+@dataclass
+class EvaluationComment:
+    """Comentário de um mentor em uma avaliação semanal."""
+
+    id: UUID
+    evaluation_id: UUID
+    mentor_nome: str
+    texto: str
+    atualizado_em: datetime
+    mentor_id: UUID | None = None
+
+
+@dataclass
+class WeeklyEvaluation:
+    """Avaliação de um aluno em uma semana do programa (níveis por LO + comentários)."""
+
+    id: UUID
+    user_id: UUID
+    semana: int
+    turma: str
+    criado_em: datetime
+    atualizado_em: datetime
+    niveis: list[EvaluationLevel] = field(default_factory=list)
+    comentarios: list[EvaluationComment] = field(default_factory=list)
+
+
+# ──────────────────────────────────────────────
+# Funções de Negócio — Avaliação de LOs
+# ──────────────────────────────────────────────
+
+
+def nivel_valido(nivel: int) -> bool:
+    """Valida que o nível está no intervalo permitido (1–4)."""
+    return NIVEL_MIN <= nivel <= NIVEL_MAX
+
+
+def semana_de(data_ref: date, data_inicio: date) -> int:
+    """Índice de semana (≥ 1) de uma data em relação ao início do programa (semana 1)."""
+    return ((data_ref - data_inicio).days // 7) + 1
+
+
+def semana_atual(hoje: date, data_inicio: date, num_semanas: int) -> int:
+    """Semana corrente, limitada ao intervalo [1, num_semanas]."""
+    s = semana_de(hoje, data_inicio)
+    if s < 1:
+        return 1
+    if s > num_semanas:
+        return num_semanas
+    return s
+
+
+def semana_no_intervalo(semana: int, num_semanas: int) -> bool:
+    """Valida que a semana está dentro do programa (1..num_semanas)."""
+    return 1 <= semana <= num_semanas
+
+
+def niveis_anteriores(rows: list[tuple[int, UUID, int]], antes_de_semana: int) -> dict[UUID, int]:
+    """Último nível conhecido por LO antes de uma semana.
+
+    Args:
+        rows: tuplas (semana, lo_id, nivel) do aluno (qualquer semana).
+        antes_de_semana: considera apenas semanas estritamente menores que esta.
+
+    Returns:
+        Mapa lo_id -> nível da semana mais recente (< antes_de_semana) que possui aquele LO.
+    """
+    melhor_semana: dict[UUID, int] = {}
+    resultado: dict[UUID, int] = {}
+    for semana, lo_id, nivel in rows:
+        if semana >= antes_de_semana:
+            continue
+        if lo_id not in melhor_semana or semana > melhor_semana[lo_id]:
+            melhor_semana[lo_id] = semana
+            resultado[lo_id] = nivel
+    return resultado
+
+
+def detectar_regressoes(
+    niveis_atuais: dict[UUID, int], niveis_anteriores_por_lo: dict[UUID, int]
+) -> list[tuple[UUID, int, int]]:
+    """Detecta regressões: LO cujo nível atual é estritamente menor que o anterior comparável.
+
+    Returns:
+        Lista de (lo_id, nivel_atual, nivel_anterior) somente quando existe nível anterior
+        comparável e o atual é menor.
+    """
+    regressoes: list[tuple[UUID, int, int]] = []
+    for lo_id, atual in niveis_atuais.items():
+        anterior = niveis_anteriores_por_lo.get(lo_id)
+        if anterior is not None and atual < anterior:
+            regressoes.append((lo_id, atual, anterior))
+    return regressoes

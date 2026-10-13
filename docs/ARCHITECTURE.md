@@ -44,6 +44,22 @@ Responsável pela interface do usuário (UI). Foi construído com foco em leveza
   - `/dashboard`: Painel Administrativo. Permite aos admins verificar quem está no lab, exportar relatórios avançados (CSV/Excel), autorizar check-ins em lote e editar cargos/turmas dos usuários.
 - **Autenticação:** Baseada em JWT (Bearer Token) armazenado no LocalStorage. Nenhuma sessão de cookies é utilizada (stateless).
 
+#### Avaliação Semanal de Learning Outcomes (LOs)
+
+Funcionalidade aditiva construída na mesma arquitetura hexagonal (domínio → caso de uso →
+adaptador de persistência → router `/api/v1/admin/avaliacoes` e `/api/v1/admin/los`).
+
+- **Modelo de dados:** `learning_outcomes` (catálogo), `lo_evaluations` (uma por aluno/semana),
+  `lo_evaluation_levels` (nível 1–4 por LO, upsert last-write-wins com atribuição ao mentor) e
+  `lo_evaluation_comments` (um por mentor). Migração Alembic dedicada.
+- **Semana:** índice inteiro derivado da configuração do programa (`config`: `lo_eval_data_inicio`,
+  `lo_eval_num_semanas`), não uma data escolhida por avaliação.
+- **Papéis:** mentores = STAFF ou ADMIN/SUPER_ADMIN, restritos à própria turma (`turma_ou_equipe`);
+  catálogo de LOs é somente-admin; dados de avaliação são visíveis apenas a mentores/admins.
+- **Dashboard e relatório** são computados em tempo de leitura (avaliados/pendentes, por mentor,
+  heatmap, regressões); a exportação reutiliza o mecanismo openpyxl/CSV existente. Sem novas
+  dependências.
+
 ### 2. Backend (`backend`)
 O coração do sistema, lida com toda a validação de regras, processamento de horas e exportação de dados.
 - **Framework:** Python com FastAPI.
