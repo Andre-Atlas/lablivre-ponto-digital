@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Users, CheckCircle, Search, LogOut, Activity, Trash2, Plus, Download, Eye, EyeOff, Calendar, GraduationCap, Briefcase , CheckSquare, Edit3, FileText } from 'lucide-react';
 import type { User } from '../services/api';
-import { API_URL, fetchUsers, approveUser, deleteUser, createAdmin, updateRole, justificarFalta } from '../services/api';
+import { API_URL, fetchUsers, approveUser, deleteUser, createAdmin, createStudent, updateRole, justificarFalta } from '../services/api';
 import { ClipboardList, ListChecks, BarChart3 } from 'lucide-react';
 import { LabLivreLogo } from '../components/LabLivreLogo';
 import { ThemeToggle } from '../components/ThemeToggle';
@@ -37,6 +37,8 @@ export function Dashboard({ onLogout, isDark, toggleTheme }: { onLogout: () => v
   const [showCatalogo, setShowCatalogo] = useState(false);
   const [showLODashboard, setShowLODashboard] = useState(false);
   const [showCertificados, setShowCertificados] = useState(false);
+  const [showAddAluno, setShowAddAluno] = useState(false);
+  const [newAluno, setNewAluno] = useState({ nome: '', email: '', turma: '' });
 
   const loadUsers = async () => {
     try {
@@ -215,6 +217,21 @@ const confirmApprove = async () => {
     }
   };
 
+  const handleAddAluno = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await createStudent(newAluno.nome, newAluno.email, newAluno.turma);
+      await loadUsers();
+      setShowAddAluno(false);
+      setNewAluno({ nome: '', email: '', turma: '' });
+    } catch (err: any) {
+      alert(err.message || 'Erro ao registrar aluno');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const filteredUsers = users.filter(u => {
     const isAluno = u.tipo === 'ALUNO';
     const matchTab = viewTab === 'ALUNO' ? isAluno : !isAluno;
@@ -323,6 +340,13 @@ const confirmApprove = async () => {
                 title="Catálogo de LOs"
               >
                 <ListChecks size={14} /> Catálogo
+              </button>
+              <button
+                onClick={() => setShowAddAluno(true)}
+                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-3 py-2.5 bg-white/50 hover:bg-white dark:bg-white/[0.03] dark:hover:bg-white/[0.08] text-slate-600 dark:text-white/70 hover:text-[#00B9DE] font-medium tracking-wide text-[11px] uppercase whitespace-nowrap rounded-xl border border-slate-200 dark:border-white/[0.08] shadow-sm transition-all active:scale-95 shrink-0"
+                title="Registrar Aluno"
+              >
+                <GraduationCap size={14} /> Registrar Aluno
               </button>
               <button
                 onClick={() => setShowCertificados(true)}
@@ -538,6 +562,35 @@ const confirmApprove = async () => {
       )}
       {showCatalogo && <LOCatalogPanel onClose={() => setShowCatalogo(false)} />}
       {showLODashboard && <LODashboardPanel onClose={() => setShowLODashboard(false)} />}
+
+      {/* Registrar Aluno */}
+      {showAddAluno && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Registrar aluno">
+          <div className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm" onClick={() => setShowAddAluno(false)}></div>
+          <div className="relative w-full max-w-sm bg-white dark:bg-[#0A0A0A] rounded-[2rem] p-8 z-10 border border-slate-200 dark:border-white/[0.08]">
+            <h3 className="text-xl font-medium mb-1 dark:text-white flex items-center gap-2"><GraduationCap size={18} className="text-[#00B9DE]" /> Registrar Aluno</h3>
+            <p className="text-slate-500 dark:text-white/40 text-sm mb-5">O aluno é um registro administrado (sem login próprio).</p>
+            <form onSubmit={handleAddAluno} className="space-y-4">
+              <div>
+                <label className="block text-[10px] uppercase tracking-widest text-slate-500 dark:text-white/40 mb-1.5 ml-1" htmlFor="al-nome">Nome</label>
+                <input id="al-nome" required value={newAluno.nome} onChange={e => setNewAluno({ ...newAluno, nome: e.target.value })} className="w-full bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[#00B9DE]/50" />
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase tracking-widest text-slate-500 dark:text-white/40 mb-1.5 ml-1" htmlFor="al-email">E-mail</label>
+                <input id="al-email" type="email" required value={newAluno.email} onChange={e => setNewAluno({ ...newAluno, email: e.target.value })} className="w-full bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[#00B9DE]/50" />
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase tracking-widest text-slate-500 dark:text-white/40 mb-1.5 ml-1" htmlFor="al-turma">Turma</label>
+                <input id="al-turma" required value={newAluno.turma} onChange={e => setNewAluno({ ...newAluno, turma: e.target.value })} placeholder="Ex: Turma 1" className="w-full bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[#00B9DE]/50" />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={() => setShowAddAluno(false)} className="flex-1 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-white/[0.03] dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-white/70 font-medium rounded-xl text-xs active:scale-95">Cancelar</button>
+                <button type="submit" disabled={isSubmitting} className="flex-1 py-2.5 px-4 bg-[#00B9DE] hover:bg-[#009bbd] text-white font-medium rounded-xl text-xs active:scale-95 disabled:opacity-50">{isSubmitting ? 'Salvando...' : 'Registrar'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Atestados Médicos */}
       {showCertificados && (

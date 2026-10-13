@@ -46,7 +46,8 @@ function App() {
     return <Login onLogin={handleLogin} isDark={isDark} toggleTheme={toggleTheme} />;
   }
 
-  if (userType === 'ADMIN') {
+  // Staff (professors/mentors) and admins use the admin workspace; students (ALUNO) check in.
+  if (userType === 'ADMIN' || userType === 'STAFF') {
     return <Dashboard onLogout={handleLogout} isDark={isDark} toggleTheme={toggleTheme} />;
   }
 

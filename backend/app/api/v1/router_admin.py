@@ -117,6 +117,43 @@ async def create_admin(
     return {"message": f"Administrador {new_admin.nome} criado com sucesso."}
 
 
+class CreateAlunoRequest(BaseModel):
+    nome: str
+    email: str
+    turma_ou_equipe: str
+
+
+@router.post("/alunos", status_code=201)
+async def create_aluno(
+    request: CreateAlunoRequest,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(require_admin),
+) -> dict[str, Any]:
+    """Registra um aluno (ALUNO) como registro administrado — sem senha/login próprio."""
+    if not request.nome.strip() or not request.email.strip():
+        raise HTTPException(status_code=400, detail="Nome e e-mail são obrigatórios.")
+    if not request.turma_ou_equipe.strip():
+        raise HTTPException(status_code=400, detail="Turma é obrigatória.")
+    existing = await db.execute(select(UserModel).where(UserModel.email == request.email))
+    if existing.scalars().first():
+        raise HTTPException(status_code=409, detail="E-mail já cadastrado.")
+
+    aluno = UserModel(
+        email=request.email,
+        nome=request.nome.strip(),
+        tipo=TipoUsuario.ALUNO,
+        role=RoleAdmin.NONE,
+        turma_ou_equipe=request.turma_ou_equipe.strip(),
+        oauth_provider="manual",
+        oauth_sub=f"manual_{uuid.uuid4()}",
+        admin_aprovado=True,
+    )
+    db.add(aluno)
+    await db.commit()
+    await db.refresh(aluno)
+    return {"id": str(aluno.id), "nome": aluno.nome, "tipo": aluno.tipo.value}
+
+
 @router.delete("/usuarios/{user_id}")
 async def delete_usuario(
     user_id: UUID, db: AsyncSession = Depends(get_db), admin: User = Depends(require_admin)

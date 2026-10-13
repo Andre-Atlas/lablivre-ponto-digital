@@ -35,6 +35,20 @@ export const adminLogin = async (email: string, password: string): Promise<{ acc
   return res.json();
 };
 
+export const createStudent = async (nome: string, email: string, turma: string): Promise<void> => {
+  const res = await fetch(`${API_URL}/admin/alunos`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
+    body: JSON.stringify({ nome, email, turma_ou_equipe: turma })
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    const msg = typeof data.detail === 'string' ? data.detail
+      : (Array.isArray(data.detail) ? data.detail.map((d: any) => d.msg).join(', ') : 'Falha ao registrar aluno');
+    throw new Error(msg);
+  }
+};
+
 export const createAdmin = async (nome: string, email: string, senha: string, role: string = "STAFF"): Promise<void> => {
   const res = await fetch(`${API_URL}/admin/usuarios`, {
     method: 'POST',
@@ -250,13 +264,6 @@ const authHeaderJson = (): Record<string, string> => ({
   'Content-Type': 'application/json',
   Authorization: `Bearer ${localStorage.getItem('token')}`,
 });
-
-const parseError = async (res: Response, fallback: string): Promise<string> => {
-  const data = await res.json().catch(() => ({}));
-  if (typeof data.detail === 'string') return data.detail;
-  if (Array.isArray(data.detail)) return data.detail.map((d: any) => d.msg).join(', ');
-  return fallback;
-};
 
 export const listLearningOutcomes = async (incluirInativos = false): Promise<LearningOutcome[]> => {
   const res = await fetch(`${API_URL}/admin/los?incluir_inativos=${incluirInativos}`, {
