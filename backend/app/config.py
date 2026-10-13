@@ -21,6 +21,14 @@ class Settings(BaseSettings):
 
     GOOGLE_SHEET_ID: str = ""
 
+    # Atestados médicos (medical certificates)
+    MAX_CERTIFICATE_SIZE_BYTES: int = 10 * 1024 * 1024  # 10 MB
+    ALLOWED_CERTIFICATE_CONTENT_TYPES: tuple[str, ...] = (
+        "application/pdf",
+        "image/jpeg",
+        "image/png",
+    )
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 

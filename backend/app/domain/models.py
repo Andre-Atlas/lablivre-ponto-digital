@@ -7,10 +7,17 @@ Inclui funções de negócio para identificação de turnos e cálculo de status
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime, time
+from datetime import date, datetime, time, timedelta
 from uuid import UUID
 
-from .enums import DiaSemana, RoleAdmin, StatusCheckin, TipoUsuario, Turno
+from .enums import (
+    CertificateStatus,
+    DiaSemana,
+    RoleAdmin,
+    StatusCheckin,
+    TipoUsuario,
+    Turno,
+)
 
 # ──────────────────────────────────────────────
 # Entidades de Domínio
@@ -79,6 +86,45 @@ class CheckInDuplicata:
     motivo: str
     criado_em: datetime
     ip_publico: str | None = None
+
+
+@dataclass
+class MedicalCertificate:
+    """Atestado médico registrado por um admin para um aluno.
+
+    Um atestado cobre um período contíguo e justifica (via CertificateDay) os turnos
+    esperados nesse período em que o aluno não possui check-in presente/atrasado real.
+    """
+
+    id: UUID
+    user_id: UUID
+    periodo_inicio: date
+    periodo_fim: date
+    documento: bytes
+    documento_filename: str
+    documento_content_type: str
+    documento_tamanho: int
+    status: CertificateStatus
+    criado_em: datetime
+    observacao: str | None = None
+    registrado_por: UUID | None = None
+    revogado_por: UUID | None = None
+    motivo_revogacao: str | None = None
+    revogado_em: datetime | None = None
+
+
+@dataclass
+class CertificateDay:
+    """Vínculo persistente entre um atestado e um turno justificado do aluno."""
+
+    id: UUID
+    certificate_id: UUID
+    user_id: UUID
+    data: date
+    turno: str
+    turno_referencia: str
+    ativo: bool
+    criado_em: datetime
 
 
 @dataclass
@@ -212,3 +258,46 @@ def calcular_status(
     if minutos_atraso <= carencia_minutos:
         return StatusCheckin.PRESENTE
     return StatusCheckin.ATRASADO
+
+
+# ──────────────────────────────────────────────
+# Atestados Médicos — Cobertura de Turnos
+# ──────────────────────────────────────────────
+
+
+def periodo_valido(periodo_inicio: date, periodo_fim: date) -> bool:
+    """Valida que o período do atestado é coerente (fim não anterior ao início)."""
+    return periodo_fim >= periodo_inicio
+
+
+def expandir_turnos_periodo(
+    turma_ou_equipe: str, periodo_inicio: date, periodo_fim: date
+) -> list[tuple[date, Turno, str]]:
+    """Expande um período de atestado nos turnos esperados da turma.
+
+    Para cada dia útil no intervalo ``[periodo_inicio, periodo_fim]`` (inclusivo), retorna
+    os turnos esperados da turma naquele dia, cada um como uma tupla
+    ``(data, turno, turno_referencia)`` onde ``turno_referencia`` é a chave
+    ``"{YYYY-MM-DD}_{MANHA|TARDE}"`` usada pela exportação de frequência.
+
+    Dias sem turno esperado (fim de semana, dias sem aula para a turma) não geram tuplas.
+    Esta é uma função pura de domínio: NÃO filtra por presença de check-in — esse filtro
+    acontece no caso de uso, que tem acesso ao banco.
+    """
+    if not periodo_valido(periodo_inicio, periodo_fim):
+        return []
+
+    resultado: list[tuple[date, Turno, str]] = []
+    atual = periodo_inicio
+    while atual <= periodo_fim:
+        dia = _DIA_SEMANA_MAP.get(atual.weekday())
+        if dia is not None:
+            turnos = sorted(
+                {c.turno for c in TURNOS_ALUNOS if c.turma == turma_ou_equipe and c.dia == dia},
+                key=lambda t: t.value,
+            )
+            for turno in turnos:
+                ref = f"{atual.isoformat()}_{turno.value}"
+                resultado.append((atual, turno, ref))
+        atual += timedelta(days=1)
+    return resultado

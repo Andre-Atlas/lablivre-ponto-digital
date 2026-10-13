@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Users, CheckCircle, Search, LogOut, Activity, Trash2, Plus, Download, Eye, EyeOff, Calendar, GraduationCap, Briefcase , CheckSquare, Edit3 } from 'lucide-react';
+import { Users, CheckCircle, Search, LogOut, Activity, Trash2, Plus, Download, Eye, EyeOff, Calendar, GraduationCap, Briefcase , CheckSquare, Edit3, FileText } from 'lucide-react';
 import type { User } from '../services/api';
 import { API_URL, fetchUsers, approveUser, deleteUser, createAdmin, updateRole, justificarFalta } from '../services/api';
 import { LabLivreLogo } from '../components/LabLivreLogo';
 import { ThemeToggle } from '../components/ThemeToggle';
+import { CertificadosPanel } from '../components/CertificadosPanel';
 
 export function Dashboard({ onLogout, isDark, toggleTheme }: { onLogout: () => void, isDark: boolean, toggleTheme: () => void }) {
   const [users, setUsers] = useState<User[]>([]);
@@ -28,6 +29,7 @@ export function Dashboard({ onLogout, isDark, toggleTheme }: { onLogout: () => v
   const [showPassword, setShowPassword] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<Set<any>>(new Set());
   const [showEditUser, setShowEditUser] = useState<any>(null);
+  const [showCertificados, setShowCertificados] = useState(false);
 
   const loadUsers = async () => {
     try {
@@ -294,7 +296,14 @@ const confirmApprove = async () => {
             </div>
             
             <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-              <button 
+              <button
+                onClick={() => setShowCertificados(true)}
+                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-3 py-2.5 bg-white/50 hover:bg-white dark:bg-white/[0.03] dark:hover:bg-white/[0.08] text-slate-600 dark:text-white/70 hover:text-[#D12A6A] dark:hover:text-[#D12A6A] font-medium tracking-wide text-[11px] uppercase whitespace-nowrap rounded-xl border border-slate-200 dark:border-white/[0.08] shadow-sm transition-all active:scale-95 shrink-0"
+                title="Atestados Médicos"
+              >
+                <FileText size={14} /> Atestados
+              </button>
+              <button
                 onClick={() => handleExport('checkins?tipo=ALUNO', 'pontos_alunos.csv')}
                 className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-3 py-2.5 bg-white/50 hover:bg-white dark:bg-white/[0.03] dark:hover:bg-white/[0.08] text-slate-600 dark:text-white/70 hover:text-slate-900 dark:hover:text-white font-medium tracking-wide text-[11px] uppercase whitespace-nowrap rounded-xl border border-slate-200 dark:border-white/[0.08] shadow-sm transition-all active:scale-95 shrink-0"
                 title="Exportar Pontos Alunos"
@@ -492,6 +501,16 @@ const confirmApprove = async () => {
       )}
 
       
+      {/* Atestados Médicos */}
+      {showCertificados && (
+        <CertificadosPanel
+          onClose={() => setShowCertificados(false)}
+          alunos={users
+            .filter((u) => u.tipo === 'ALUNO')
+            .map((u) => ({ id: u.id, nome: u.nome }))}
+        />
+      )}
+
       {/* Justificar Modal */}
       {showJustificar.visible && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">

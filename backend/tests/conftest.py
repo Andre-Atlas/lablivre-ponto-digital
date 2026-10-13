@@ -4,8 +4,18 @@ import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
+from app.adapters.persistence.database import engine
+from app.adapters.persistence.orm_models import Base
 from app.config import Settings, get_settings
 from app.main import app
+
+
+@pytest_asyncio.fixture(autouse=True, scope="session")
+async def _create_tables() -> AsyncGenerator[None, None]:
+    """Garante que todas as tabelas (incl. atestados) existam no banco de testes."""
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield
 
 
 @pytest.fixture

@@ -21,6 +21,7 @@ O **Ponto Digital Multiplataforma** é o sistema oficial de registro de frequên
 * **Ações em Massa (Bulk Actions):** Autorização ou Justificativa de ponto de vários usuários com 1 único clique via Checkboxes.
 * **Exportação Avançada (Relatórios):** Geração de planilhas Excel e CSV customizadas (Filtráveis por: Data Específica, Turma/Equipe, Turno, Tipo de Usuário).
 * **Gestão de Usuários:** Edição de perfil de qualquer aluno (Turma, Número de Patrimônio da Máquina alocada, Nível de Acesso).
+* **Atestados Médicos:** Registro de atestados (documento + período) para alunos. Um único atestado justifica a ausência de vários dias, mantendo-se vinculado a cada turno justificado; as faltas cobertas aparecem como **Justificado** nas exportações (CSV e Excel). Documentos ficam acessíveis apenas a administradores.
 
 ---
 

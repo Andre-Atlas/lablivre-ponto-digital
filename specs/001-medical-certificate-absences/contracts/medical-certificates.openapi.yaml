@@ -1,0 +1,198 @@
+openapi: 3.1.0
+info:
+  title: Ponto Digital — Medical Certificates API
+  version: 1.0.0
+  description: >
+    Admin-only endpoints for recording, viewing, and revoking medical certificates that
+    justify student absences. Mounted under /api/v1. All endpoints require a Bearer JWT whose
+    user has role SUPER_ADMIN or ADMIN (enforced by the existing `require_admin` dependency).
+    This fragment documents only the new endpoints; it is merged into the live OpenAPI that
+    FastAPI generates.
+
+servers:
+  - url: /api/v1
+
+security:
+  - bearerAuth: []
+
+paths:
+  /admin/certificados:
+    post:
+      operationId: recordCertificate
+      summary: Record a medical certificate for a student (justifies covered absences on save)
+      description: >
+        Accepts the certificate document plus the covered period. On success, every expected
+        shift in [periodo_inicio, periodo_fim] where the student has an absence is linked to
+        this certificate and treated as justified (including days whose absence is determined
+        later). Multipart because it carries a binary document.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [user_id, periodo_inicio, periodo_fim, documento]
+              properties:
+                user_id:
+                  type: string
+                  format: uuid
+                  description: Student the certificate applies to.
+                periodo_inicio:
+                  type: string
+                  format: date
+                  example: "2026-10-05"
+                periodo_fim:
+                  type: string
+                  format: date
+                  example: "2026-10-09"
+                observacao:
+                  type: string
+                  nullable: true
+                documento:
+                  type: string
+                  format: binary
+                  description: PDF/JPEG/PNG, max ~10 MB.
+      responses:
+        "201":
+          description: Certificate recorded; covered absent shifts justified and linked.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CertificateDetail" }
+        "400":
+          description: Validation error (missing document/period, end before start, bad file type/size).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "401": { description: Missing/invalid token. }
+        "403": { description: Caller is not an administrator. }
+        "404": { description: Student not found. }
+    get:
+      operationId: listCertificates
+      summary: List certificates (optionally filtered by student and/or status)
+      parameters:
+        - { in: query, name: user_id, schema: { type: string, format: uuid }, required: false }
+        - in: query
+          name: status
+          required: false
+          schema: { type: string, enum: [ACTIVE, REVOKED] }
+      responses:
+        "200":
+          description: Certificates, newest first.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/CertificateSummary" }
+        "401": { description: Missing/invalid token. }
+        "403": { description: Caller is not an administrator. }
+
+  /admin/certificados/{certificate_id}:
+    get:
+      operationId: getCertificate
+      summary: Get a certificate with the days it justified
+      parameters:
+        - { in: path, name: certificate_id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Certificate detail including linked justified days.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CertificateDetail" }
+        "401": { description: Missing/invalid token. }
+        "403": { description: Caller is not an administrator. }
+        "404": { description: Certificate not found. }
+
+  /admin/certificados/{certificate_id}/documento:
+    get:
+      operationId: downloadCertificateDocument
+      summary: Download the certificate document (admin-only; sensitive health data)
+      parameters:
+        - { in: path, name: certificate_id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: The stored document bytes.
+          content:
+            application/pdf: { schema: { type: string, format: binary } }
+            image/jpeg: { schema: { type: string, format: binary } }
+            image/png: { schema: { type: string, format: binary } }
+        "401": { description: Missing/invalid token. }
+        "403": { description: Caller is not an administrator. }
+        "404": { description: Certificate not found. }
+
+  /admin/certificados/{certificate_id}/revogar:
+    post:
+      operationId: revokeCertificate
+      summary: Revoke a certificate (reverts days it solely justified back to absence)
+      parameters:
+        - { in: path, name: certificate_id, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                motivo: { type: string, nullable: true }
+      responses:
+        "200":
+          description: Certificate revoked; links deactivated; record retained.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CertificateDetail" }
+        "401": { description: Missing/invalid token. }
+        "403": { description: Caller is not an administrator. }
+        "404": { description: Certificate not found. }
+        "409": { description: Certificate already revoked. }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    JustifiedDay:
+      type: object
+      properties:
+        data: { type: string, format: date }
+        turno: { type: string, enum: [MANHA, TARDE] }
+        turno_referencia: { type: string, example: "2026-10-05_MANHA" }
+        ativo: { type: boolean }
+
+    CertificateSummary:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        user_id: { type: string, format: uuid }
+        user_nome: { type: string }
+        periodo_inicio: { type: string, format: date }
+        periodo_fim: { type: string, format: date }
+        status: { type: string, enum: [ACTIVE, REVOKED] }
+        dias_justificados: { type: integer, description: Count of active justified shifts. }
+        documento_filename: { type: string }
+        documento_content_type: { type: string }
+        criado_em: { type: string, format: date-time }
+
+    CertificateDetail:
+      allOf:
+        - $ref: "#/components/schemas/CertificateSummary"
+        - type: object
+          properties:
+            observacao: { type: string, nullable: true }
+            registrado_por: { type: string, format: uuid, nullable: true }
+            revogado_por: { type: string, format: uuid, nullable: true }
+            revogado_em: { type: string, format: date-time, nullable: true }
+            motivo_revogacao: { type: string, nullable: true }
+            dias:
+              type: array
+              items: { $ref: "#/components/schemas/JustifiedDay" }
+
+    Error:
+      type: object
+      properties:
+        detail:
+          oneOf:
+            - type: string
+            - type: array
+              items: { type: object }

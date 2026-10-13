@@ -44,6 +44,23 @@ Responsável pela interface do usuário (UI). Foi construído com foco em leveza
   - `/dashboard`: Painel Administrativo. Permite aos admins verificar quem está no lab, exportar relatórios avançados (CSV/Excel), autorizar check-ins em lote e editar cargos/turmas dos usuários.
 - **Autenticação:** Baseada em JWT (Bearer Token) armazenado no LocalStorage. Nenhuma sessão de cookies é utilizada (stateless).
 
+#### Atestados Médicos (justificativa de faltas)
+
+Construído sobre a frequência existente, seguindo a arquitetura hexagonal (domínio →
+caso de uso → adaptador de persistência → router `/api/v1/admin/certificados`).
+
+- **Modelo de dados:** `medical_certificates` (documento em BYTEA, período, status
+  `ACTIVE`/`REVOKED`, auditoria) e `certificate_days` (vínculo por turno —
+  `turno_referencia` — com flag `ativo`). Migração Alembic dedicada.
+- **Regra de vínculo:** ao registrar, cada turno esperado do período sem check-in
+  presente/atrasado real (FALTA ou já JUSTIFICADO) recebe um `certificate_day`. Faltas
+  não são armazenadas; são derivadas da ausência de check-in, então o vínculo é a fonte
+  de verdade da justificativa — inclusive para dias futuros do período.
+- **Exportação:** ambas as saídas (CSV e Excel) consultam os `certificate_days` ativos e
+  exibem os turnos cobertos como `JUSTIFICADO` (atribuído ao atestado) em vez de `FALTA`.
+- **Segurança:** registro, consulta, download do documento e revogação são restritos a
+  administradores; o documento contém dado sensível de saúde.
+
 ### 2. Backend (`backend`)
 O coração do sistema, lida com toda a validação de regras, processamento de horas e exportação de dados.
 - **Framework:** Python com FastAPI.
