@@ -40,8 +40,8 @@ Responsável pela interface do usuário (UI). Foi construído com foco em leveza
 - **Estilização:** Tailwind CSS v4 (CSS-first `@theme`, sem `tailwind.config.js`) sobre o **Design System Lab Livre** — tema claro único.
 - **Ícones:** Lucide React.
 - **Roteamento e Funcionalidades:**
-  - `/ponto`: Tela interativa e segura onde alunos e staff batem o ponto, visualizam saldo de horas e editam seus perfis (nome e senha).
-  - `/dashboard`: Painel Administrativo. Permite aos admins verificar quem está no lab, exportar relatórios avançados (CSV/Excel), autorizar check-ins em lote e editar cargos/turmas dos usuários.
+  - `/frequencia`: Lançamento de frequência pelo mentor (Presente/Falta por turma/data/turno, com atestado por turno). Substitui a antiga autofrequência do aluno.
+  - `/dashboard`, `/pessoas`, `/avaliacoes/*`, `/registrar/*`: Painel do mentor/administrador (navegação roteada). **Somente mentores autenticam** — alunos não têm login.
 - **Autenticação:** Baseada em JWT (Bearer Token) armazenado no LocalStorage. Nenhuma sessão de cookies é utilizada (stateless).
 
 #### Design System Lab Livre
@@ -76,6 +76,25 @@ adaptador de persistência → router `/api/v1/admin/avaliacoes` e `/api/v1/admi
 - **Dashboard e relatório** são computados em tempo de leitura (avaliados/pendentes, por mentor,
   heatmap, regressões); a exportação reutiliza o mecanismo openpyxl/CSV existente. Sem novas
   dependências.
+
+#### Frequência lançada por mentores
+
+Inverte o modelo de presença: a frequência é **lançada pelo mentor**, não auto-registrada
+pelo aluno. Segue a arquitetura hexagonal (domínio → caso de uso → adaptador → `/api/v1/frequencia`).
+
+- **Modelo de dados:** `frequencias` (um lançamento por aluno/data/turno — upsert idempotente;
+  estado `PRESENTE`/`FALTA`/`JUSTIFICADO`; documento de atestado por turno), `mentor_turmas`
+  (vínculo N–N mentor↔turma) e a coluna `users.status` (`ATIVO`/`DESLIGADO`). Migração Alembic
+  dedicada (**destrutiva**: descarta os `checkins` do modelo antigo; preserva atestados/avaliações).
+- **Atestado no lançamento:** ao marcar Falta, o mentor anexa um atestado àquele turno, que passa a
+  Justificado — cobrindo apenas aquele turno. Não há mais tela separada de Atestados; o modelo por
+  período (feature 001) permanece como histórico somente-leitura.
+- **RBAC por turma:** mentor só acessa/lança as suas turmas (`mentor_turmas`); admin/super-admin
+  veem todas. Aplicado no servidor em frequência e avaliações.
+- **Status do aluno:** Desligados saem das listas ativas (frequência, avaliação, dashboards) e
+  permanecem no histórico e nas exportações (marcados). Reversível.
+- **Autenticação:** somente mentores (STAFF/ADMIN) autenticam; removidos o auto-check-in
+  (`router_checkin`), o registro/onboarding de aluno e o cliente desktop de autofrequência.
 
 #### Atestados Médicos (justificativa de faltas)
 

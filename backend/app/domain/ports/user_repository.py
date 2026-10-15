@@ -37,6 +37,7 @@ class UserRepository(ABC):
         self,
         tipo: TipoUsuario | None = None,
         turma: str | None = None,
+        somente_ativos: bool = False,
     ) -> list[User]:
         """Lista usuários com filtros opcionais."""
         ...

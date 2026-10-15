@@ -60,12 +60,21 @@ class UserRepositoryImpl(UserRepository):
             await self.session.flush()
         return user
 
-    async def listar(self, tipo: TipoUsuario | None = None, turma: str | None = None) -> list[User]:
+    async def listar(
+        self,
+        tipo: TipoUsuario | None = None,
+        turma: str | None = None,
+        somente_ativos: bool = False,
+    ) -> list[User]:
         stmt = select(UserORM)
         if tipo:
             stmt = stmt.where(UserORM.tipo == tipo)
         if turma:
             stmt = stmt.where(UserORM.turma_ou_equipe == turma)
+        if somente_ativos:
+            from app.domain.enums import StatusAluno
+
+            stmt = stmt.where(UserORM.status == StatusAluno.ATIVO)
         result = await self.session.execute(stmt)
         return [self._to_domain(u) for u in result.scalars().all()]
 

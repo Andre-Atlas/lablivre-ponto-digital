@@ -20,9 +20,17 @@ from app.adapters.persistence.database import get_db
 from app.adapters.persistence.orm_models import Checkin as CheckInModel
 from app.adapters.persistence.orm_models import Config as ConfigModel
 from app.adapters.persistence.orm_models import Device as DeviceModel
+from app.adapters.persistence.orm_models import Frequencia as FrequenciaModel
+from app.adapters.persistence.orm_models import MentorTurma as MentorTurmaModel
 from app.adapters.persistence.orm_models import User as UserModel
 from app.api.middleware.auth_dependencies import get_current_user
-from app.domain.enums import CertificateStatus, RoleAdmin, StatusCheckin, TipoUsuario
+from app.domain.enums import (
+    CertificateStatus,
+    RoleAdmin,
+    StatusAluno,
+    StatusCheckin,
+    TipoUsuario,
+)
 from app.domain.models import User
 from app.utils.security import get_password_hash
 
@@ -37,6 +45,7 @@ class UserAdminResponse(BaseModel):
     tipo: TipoUsuario
     role: RoleAdmin | None = None
     admin_aprovado: bool
+    status: StatusAluno = StatusAluno.ATIVO
 
 
 async def require_admin(
@@ -63,11 +72,15 @@ async def require_admin(
 
 @router.get("/usuarios", response_model=list[UserAdminResponse])
 async def list_usuarios(
-    db: AsyncSession = Depends(get_db), admin: User = Depends(require_admin)
+    status: str | None = None,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(require_admin),
 ) -> Any:
-    result = await db.execute(select(UserModel))
-    users = result.scalars().all()
-    return users  # Let FastAPI serialize it. We just need from_attributes=True in schema.
+    stmt = select(UserModel)
+    if status:
+        stmt = stmt.where(UserModel.status == status)
+    users = (await db.execute(stmt)).scalars().all()
+    return users  # from_attributes=True no schema cuida da serialização.
 
 
 @router.post("/usuarios/{user_id}/aprovar")
@@ -193,6 +206,54 @@ async def delete_turma(
     return sorted(novas)
 
 
+# ─────────────────────────── Vínculo mentor–turma ───────────────────────────
+
+
+class MentorTurmasRequest(BaseModel):
+    turmas: list[str]
+
+
+@router.get("/mentores/{user_id}/turmas", response_model=list[str])
+async def get_mentor_turmas(
+    user_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(require_admin),
+) -> Any:
+    rows = await db.execute(
+        select(MentorTurmaModel.turma).where(MentorTurmaModel.user_id == user_id)
+    )
+    return sorted(r[0] for r in rows.all())
+
+
+@router.put("/mentores/{user_id}/turmas", response_model=list[str])
+async def set_mentor_turmas(
+    user_id: UUID,
+    request: MentorTurmasRequest,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(require_admin),
+) -> Any:
+    mentor = (await db.execute(select(UserModel).where(UserModel.id == user_id))).scalars().first()
+    if not mentor:
+        raise HTTPException(status_code=404, detail="Mentor não encontrado.")
+    if mentor.tipo != TipoUsuario.STAFF and mentor.role not in (RoleAdmin.ADMIN, RoleAdmin.SUPER_ADMIN):
+        raise HTTPException(status_code=400, detail="Só mentores (staff/admin) podem ser atrelados a turmas.")
+
+    cadastradas = set(await _get_turmas(db))
+    novas = {t.strip() for t in request.turmas if t.strip()}
+    invalidas = novas - cadastradas
+    if invalidas:
+        raise HTTPException(
+            status_code=400, detail=f"Turma(s) não cadastrada(s): {', '.join(sorted(invalidas))}"
+        )
+
+    await db.execute(MentorTurmaModel.__table__.delete().where(MentorTurmaModel.user_id == user_id))
+    now = datetime.now(UTC)
+    for t in sorted(novas):
+        db.add(MentorTurmaModel(id=uuid.uuid4(), user_id=user_id, turma=t, criado_em=now))
+    await db.commit()
+    return sorted(novas)
+
+
 class CreateAlunoRequest(BaseModel):
     nome: str
     email: str
@@ -235,6 +296,29 @@ async def create_aluno(
     return {"id": str(aluno.id), "nome": aluno.nome, "tipo": aluno.tipo.value}
 
 
+class StatusAlunoRequest(BaseModel):
+    status: str
+
+
+@router.put("/alunos/{user_id}/status", response_model=UserAdminResponse)
+async def set_aluno_status(
+    user_id: UUID,
+    request: StatusAlunoRequest,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(require_admin),
+) -> Any:
+    aluno = (await db.execute(select(UserModel).where(UserModel.id == user_id))).scalars().first()
+    if not aluno:
+        raise HTTPException(status_code=404, detail="Aluno não encontrado.")
+    try:
+        aluno.status = StatusAluno(request.status)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Status inválido (use ATIVO ou DESLIGADO).") from None
+    await db.commit()
+    await db.refresh(aluno)
+    return aluno
+
+
 @router.delete("/usuarios/{user_id}")
 async def delete_usuario(
     user_id: UUID, db: AsyncSession = Depends(get_db), admin: User = Depends(require_admin)
@@ -262,7 +346,7 @@ async def export_usuarios(
 
     output_csv = io.StringIO()
     writer = csv.writer(output_csv)
-    writer.writerow(["ID", "Nome", "Email", "Tipo", "Aprovado", "Turma", "Máquina", "Criado Em"])
+    writer.writerow(["ID", "Nome", "Email", "Tipo", "Status", "Aprovado", "Turma", "Máquina", "Criado Em"])
 
     for u in users:
         writer.writerow(
@@ -271,6 +355,7 @@ async def export_usuarios(
                 u.nome,
                 u.email,
                 u.tipo.value if u.tipo else "",
+                u.status.value if u.status else "",
                 "Sim" if u.admin_aprovado else "Nao",
                 u.turma_ou_equipe or "",
                 u.patrimonio or "",
@@ -287,6 +372,45 @@ async def export_usuarios(
         iter([output_csv.getvalue()]),
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=usuarios_lablivre.csv"},
+    )
+
+
+@router.get("/export/frequencia")
+async def export_frequencia(
+    turma: str | None = None,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(require_admin),
+) -> Any:
+    """Relatório de frequência lançada pelos mentores (inclui alunos Desligados, marcados)."""
+    stmt = (
+        select(FrequenciaModel, UserModel)
+        .join(UserModel, FrequenciaModel.aluno_id == UserModel.id)
+        .order_by(FrequenciaModel.data, FrequenciaModel.turma, UserModel.nome)
+    )
+    if turma:
+        stmt = stmt.where(FrequenciaModel.turma == turma)
+    rows = (await db.execute(stmt)).all()
+
+    output_csv = io.StringIO()
+    writer = csv.writer(output_csv)
+    writer.writerow(["Data", "Turno", "Turma", "Aluno", "Status Aluno", "Frequência", "Atestado"])
+    for freq, u in rows:
+        writer.writerow(
+            [
+                freq.data.isoformat(),
+                freq.turno,
+                freq.turma,
+                u.nome,
+                u.status.value if u.status else "",
+                freq.status,
+                "Sim" if freq.atestado_documento else "Nao",
+            ]
+        )
+    output_csv.seek(0)
+    return StreamingResponse(
+        iter([output_csv.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=frequencia.csv"},
     )
 
 

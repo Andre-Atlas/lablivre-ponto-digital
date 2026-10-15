@@ -133,7 +133,7 @@ class EvaluationUseCase:
 
     # ── US3: dashboard ──────────────────────────────────────────────────────
     async def dashboard(self, turma: str, semana: int) -> dict[str, Any]:
-        students = await self.user_repo.listar(tipo=TipoUsuario.ALUNO, turma=turma)
+        students = await self.user_repo.listar(tipo=TipoUsuario.ALUNO, turma=turma, somente_ativos=True)
         evals = await self.eval_repo.listar_por_turma_semana(turma, semana)
         los = await self.lo_repo.listar(incluir_inativos=False)
         eval_by_user = {e.user_id: e for e in evals}
@@ -203,7 +203,7 @@ class EvaluationUseCase:
 
     # ── US4: report data ────────────────────────────────────────────────────
     async def dados_relatorio(self, turma: str, semana: int) -> dict[str, Any]:
-        students = await self.user_repo.listar(tipo=TipoUsuario.ALUNO, turma=turma)
+        students = await self.user_repo.listar(tipo=TipoUsuario.ALUNO, turma=turma, somente_ativos=True)
         evals = await self.eval_repo.listar_por_turma_semana(turma, semana)
         los = await self.lo_repo.listar(incluir_inativos=False)
         eval_by_user = {e.user_id: e for e in evals}

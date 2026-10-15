@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Users, Search, Trash2, Briefcase, GraduationCap, CheckSquare, Edit3, ArrowRightLeft } from 'lucide-react';
+import { Users, Search, Trash2, Briefcase, GraduationCap, CheckSquare, Edit3, ArrowRightLeft, UserMinus, UserCheck } from 'lucide-react';
 import type { User } from '../../services/api';
-import { API_URL, fetchUsers, approveUser, deleteUser, updateRole } from '../../services/api';
+import {
+  API_URL, fetchUsers, approveUser, deleteUser, updateRole,
+  listTurmas, getMentorTurmas, setMentorTurmas as apiSetMentorTurmas, setAlunoStatus,
+} from '../../services/api';
 import { PageHeader, Card, Badge, Table, Modal, Button, Input, Select, EmptyState } from '../../components/ui';
 
 export function PessoasPage() {
@@ -13,6 +16,15 @@ export function PessoasPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<Set<any>>(new Set());
   const [showEditUser, setShowEditUser] = useState<any>(null);
+  const [allTurmas, setAllTurmas] = useState<string[]>([]);
+  const [mentorTurmasSel, setMentorTurmasSel] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (showEditUser && showEditUser.tipo !== 'ALUNO') {
+      listTurmas().then(setAllTurmas).catch(() => {});
+      getMentorTurmas(showEditUser.id).then(setMentorTurmasSel).catch(() => setMentorTurmasSel([]));
+    }
+  }, [showEditUser]);
 
   const loadUsers = async () => {
     try {
@@ -46,6 +58,16 @@ export function PessoasPage() {
       console.error(err);
     } finally {
       setShowPopup({ visible: false, userId: null, userName: '' });
+    }
+  };
+
+  const handleToggleStatus = async (u: User) => {
+    const novo = u.status === 'DESLIGADO' ? 'ATIVO' : 'DESLIGADO';
+    try {
+      await setAlunoStatus(u.id, novo);
+      loadUsers();
+    } catch (e: any) {
+      alert(e.message);
     }
   };
 
@@ -92,7 +114,10 @@ export function PessoasPage() {
         body: JSON.stringify({ turma_ou_equipe: showEditUser.turma_ou_equipe, patrimonio: showEditUser.patrimonio, tipo: showEditUser.tipo }),
       });
       if (!res.ok) throw new Error('Não foi possível editar');
-      fetchUsers();
+      if (showEditUser.tipo !== 'ALUNO') {
+        await apiSetMentorTurmas(showEditUser.id, mentorTurmasSel);
+      }
+      await loadUsers();
       setShowEditUser(null);
     } catch (e) {
       console.error(e);
@@ -165,13 +190,26 @@ export function PessoasPage() {
               },
               { key: 'colaborador', header: 'Colaborador', render: (u) => (<div><div className="font-semibold text-ink">{u.nome}</div><div className="text-xs text-muted">{u.email}</div></div>) },
               { key: 'funcao', header: 'Função', render: (u) => <Badge tone={u.tipo === 'ALUNO' ? 'primary' : 'neutral'}>{u.tipo === 'ALUNO' ? 'ALUNO' : (u.role && u.role !== 'STAFF' ? u.role.replace('_', ' ') : 'STAFF')}</Badge> },
-              { key: 'status', header: 'Status', render: (u) => (u.admin_aprovado ? <Badge tone="success">Aprovado</Badge> : <Badge tone="accent">Pendente</Badge>) },
+              {
+                key: 'status', header: 'Status',
+                render: (u) => (u.tipo === 'ALUNO'
+                  ? (u.status === 'DESLIGADO' ? <Badge tone="neutral">Desligado</Badge> : <Badge tone="success">Ativo</Badge>)
+                  : (u.admin_aprovado ? <Badge tone="success">Aprovado</Badge> : <Badge tone="accent">Pendente</Badge>)),
+              },
               {
                 key: 'acao', header: 'Ações', align: 'right',
                 render: (u) => (
                   <div className="flex items-center justify-end gap-1.5">
                     {!u.admin_aprovado && <Button size="sm" variant="ghost" onClick={() => setShowPopup({ visible: true, userId: u.id, userName: u.nome })}>Autorizar</Button>}
                     {u.tipo !== 'ALUNO' && <button type="button" onClick={() => handlePromote(u.id, u.role || 'STAFF')} className="rounded-lg p-2 text-muted transition-colors hover:bg-primary/10 hover:text-primary" title="Alterar cargo" aria-label={`Alterar cargo de ${u.nome}`}><ArrowRightLeft size={16} /></button>}
+                    {u.tipo === 'ALUNO' && (
+                      <button type="button" onClick={() => handleToggleStatus(u)}
+                        className={`rounded-lg p-2 transition-colors ${u.status === 'DESLIGADO' ? 'text-success-dark hover:bg-success/10' : 'text-muted hover:bg-accent/10 hover:text-accent-darker'}`}
+                        title={u.status === 'DESLIGADO' ? 'Reativar aluno' : 'Desligar aluno'}
+                        aria-label={`${u.status === 'DESLIGADO' ? 'Reativar' : 'Desligar'} ${u.nome}`}>
+                        {u.status === 'DESLIGADO' ? <UserCheck size={16} /> : <UserMinus size={16} />}
+                      </button>
+                    )}
                     <button type="button" onClick={() => setShowEditUser(u)} className="rounded-lg p-2 text-muted transition-colors hover:bg-primary/10 hover:text-primary" title="Editar" aria-label={`Editar ${u.nome}`}><Edit3 size={16} /></button>
                     <button type="button" onClick={() => handleDelete(u.id, u.nome)} className="rounded-lg p-2 text-muted transition-colors hover:bg-danger/10 hover:text-danger" title="Excluir" aria-label={`Excluir ${u.nome}`}><Trash2 size={16} /></button>
                   </div>
@@ -204,6 +242,33 @@ export function PessoasPage() {
               <option value="STAFF">Staff</option>
               <option value="ADMIN">Admin</option>
             </Select>
+
+            {showEditUser.tipo !== 'ALUNO' && (
+              <div className="flex flex-col gap-1.5">
+                <span className="eyebrow">Turmas do mentor</span>
+                {allTurmas.length === 0 ? (
+                  <p className="text-xs text-muted">Nenhuma turma cadastrada.</p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {allTurmas.map((t) => {
+                      const on = mentorTurmasSel.includes(t);
+                      return (
+                        <label key={t} className={`inline-flex cursor-pointer items-center gap-1.5 rounded-pill border px-3 py-1 text-xs font-semibold transition-colors ${on ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted hover:text-ink'}`}>
+                          <input
+                            type="checkbox"
+                            className="accent-primary"
+                            checked={on}
+                            onChange={(e) => setMentorTurmasSel((p) => (e.target.checked ? [...p, t] : p.filter((x) => x !== t)))}
+                          />
+                          {t}
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+                <p className="text-xs text-muted">O mentor só lança frequência/avaliações das turmas marcadas.</p>
+              </div>
+            )}
           </form>
         )}
       </Modal>

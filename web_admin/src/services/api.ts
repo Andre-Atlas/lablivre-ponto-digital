@@ -7,7 +7,20 @@ export interface User {
   tipo: string;
   role?: string;
   admin_aprovado: boolean;
+  status?: string; // ATIVO | DESLIGADO (alunos)
 }
+
+export const setAlunoStatus = async (userId: string | number, status: string): Promise<void> => {
+  const res = await fetch(`${API_URL}/admin/alunos/${userId}/status`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
+    body: JSON.stringify({ status }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(typeof data.detail === 'string' ? data.detail : 'Não foi possível alterar o status');
+  }
+};
 
 export const fetchUsers = async (): Promise<User[]> => {
   const res = await fetch(`${API_URL}/admin/usuarios`, {
@@ -54,6 +67,36 @@ export const createTurma = async (nome: string): Promise<string[]> => {
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
     throw new Error(typeof data.detail === 'string' ? data.detail : 'Não foi possível cadastrar turma');
+  }
+  return res.json();
+};
+
+/** Turmas que o mentor logado pode lançar (as suas; admin vê todas). */
+export const getFrequenciaTurmas = async (): Promise<string[]> => {
+  const res = await fetch(`${API_URL}/frequencia/turmas`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+  });
+  if (!res.ok) throw new Error('Não foi possível carregar suas turmas');
+  return res.json();
+};
+
+export const getMentorTurmas = async (userId: string | number): Promise<string[]> => {
+  const res = await fetch(`${API_URL}/admin/mentores/${userId}/turmas`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+  });
+  if (!res.ok) throw new Error('Não foi possível carregar as turmas do mentor');
+  return res.json();
+};
+
+export const setMentorTurmas = async (userId: string | number, turmas: string[]): Promise<string[]> => {
+  const res = await fetch(`${API_URL}/admin/mentores/${userId}/turmas`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
+    body: JSON.stringify({ turmas }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(typeof data.detail === 'string' ? data.detail : 'Não foi possível salvar as turmas do mentor');
   }
   return res.json();
 };

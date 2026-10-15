@@ -3,7 +3,7 @@ import { Save, Check, X, Eye, Ban, Paperclip, Users } from 'lucide-react';
 import type { AlunoFrequencia } from '../../services/api';
 import {
   getFrequencia, lancarFrequencia, anexarAtestadoFrequencia,
-  removerAtestadoFrequencia, baixarAtestadoFrequencia, listTurmas,
+  removerAtestadoFrequencia, baixarAtestadoFrequencia, getFrequenciaTurmas,
 } from '../../services/api';
 import { PageHeader, Card, Select, Input, Button, Badge, Alert, EmptyState } from '../../components/ui';
 
@@ -23,7 +23,7 @@ export function FrequenciaPage() {
   const [okMsg, setOkMsg] = useState<string | null>(null);
 
   useEffect(() => {
-    listTurmas().then((t) => { setTurmas(t); setTurma((c) => c || t[0] || ''); }).catch((e) => setError(e.message));
+    getFrequenciaTurmas().then((t) => { setTurmas(t); setTurma((c) => c || t[0] || ''); }).catch((e) => setError(e.message));
   }, []);
 
   const carregar = async () => {

@@ -51,8 +51,7 @@ export function AdminNavbar({ onLogout }: { onLogout: () => void }) {
             <Menu triggerClassName={triggerCls} label={<>Exportar <ChevronDown size={14} /></>}>
               {(close) => (
                 <>
-                  <MenuItem icon={<Download size={15} />} onClick={() => { doExport('checkins?tipo=ALUNO', 'pontos_alunos.csv'); close(); }}>Pontos (Alunos)</MenuItem>
-                  <MenuItem icon={<Download size={15} />} onClick={() => { doExport('checkins?tipo=STAFF', 'pontos_staff.csv'); close(); }}>Pontos (Staff)</MenuItem>
+                  <MenuItem icon={<Download size={15} />} onClick={() => { doExport('frequencia', 'frequencia.csv'); close(); }}>Frequência</MenuItem>
                   <MenuItem icon={<Download size={15} />} onClick={() => { doExport('usuarios', 'usuarios_lablivre.csv'); close(); }}>Usuários</MenuItem>
                 </>
               )}
@@ -103,8 +102,7 @@ export function AdminNavbar({ onLogout }: { onLogout: () => void }) {
             <MobileLink onClick={() => { go('/registrar/admin'); setMobileOpen(false); }} icon={<UserPlus size={16} />}>Novo admin</MobileLink>
           </MobileGroup>
           <MobileGroup title="Exportar">
-            <MobileLink onClick={() => { doExport('checkins?tipo=ALUNO', 'pontos_alunos.csv'); setMobileOpen(false); }} icon={<Download size={16} />}>Pontos (Alunos)</MobileLink>
-            <MobileLink onClick={() => { doExport('checkins?tipo=STAFF', 'pontos_staff.csv'); setMobileOpen(false); }} icon={<Download size={16} />}>Pontos (Staff)</MobileLink>
+            <MobileLink onClick={() => { doExport('frequencia', 'frequencia.csv'); setMobileOpen(false); }} icon={<Download size={16} />}>Frequência</MobileLink>
             <MobileLink onClick={() => { doExport('usuarios', 'usuarios_lablivre.csv'); setMobileOpen(false); }} icon={<Download size={16} />}>Usuários</MobileLink>
           </MobileGroup>
           <button

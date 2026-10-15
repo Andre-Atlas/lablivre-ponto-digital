@@ -19,8 +19,10 @@ from app.adapters.persistence.frequencia_repo_impl import (
 )
 from app.adapters.persistence.orm_models import User as UserModel
 from app.api.schemas.frequencia_schemas import AlunoFrequenciaOut, LancamentoIn
+from app.api.v1.router_admin import _get_turmas
 from app.api.v1.router_evaluations import require_mentor
 from app.application.frequencia_use_case import FrequenciaUseCase
+from app.application.turma_scope import assert_turma_permitida, turmas_do_mentor
 from app.config import Settings, get_settings
 from app.domain.enums import StatusAluno, TipoUsuario
 
@@ -29,6 +31,17 @@ router = APIRouter(prefix="/frequencia", tags=["Frequência"])
 
 def _use_case(db: AsyncSession) -> FrequenciaUseCase:
     return FrequenciaUseCase(FrequenciaRepositoryImpl(db))
+
+
+@router.get("/turmas", response_model=list[str])
+async def minhas_turmas(
+    db: AsyncSession = Depends(get_db),
+    mentor: UserModel = Depends(require_mentor),
+) -> Any:
+    """Turmas que o mentor pode lançar (as suas; admin vê todas as cadastradas)."""
+    todas = set(await _get_turmas(db))
+    escopo = await turmas_do_mentor(db, mentor)
+    return sorted(todas if escopo is None else (escopo & todas))
 
 
 @router.get("", response_model=list[AlunoFrequenciaOut])
@@ -40,6 +53,7 @@ async def listar_frequencia(
     mentor: UserModel = Depends(require_mentor),
 ) -> Any:
     """Lista os alunos ATIVOS da turma com o lançamento atual (status + atestado)."""
+    await assert_turma_permitida(db, mentor, turma)
     alunos = (
         await db.execute(
             select(UserModel).where(
@@ -74,6 +88,7 @@ async def lancar_frequencia(
     db: AsyncSession = Depends(get_db),
     mentor: UserModel = Depends(require_mentor),
 ) -> Any:
+    await assert_turma_permitida(db, mentor, payload.turma)
     try:
         itens = [(i.aluno_id, i.status) for i in payload.lancamentos]
         await _use_case(db).lancar(mentor.id, payload.turma, payload.data, payload.turno, itens)

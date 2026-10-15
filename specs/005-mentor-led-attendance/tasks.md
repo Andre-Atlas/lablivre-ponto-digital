@@ -76,11 +76,11 @@ description: "Task list for Frequência lançada por mentores"
 **Goal**: Mentor atrelado a 1+ turmas; só acessa/lança nas suas; admin vê todas.
 **Independent Test**: mentor de 1 turma recebe 403 em outra; mentor de 2 alterna sem misturar; admin vê tudo.
 
-- [ ] T026 [P] [US3] Teste de integração em `backend/tests/integration/test_mentor_turma_rbac.py`: mentor fora de escopo → 403 em frequência/avaliação; admin acessa todas; set/get de turmas do mentor; **regressão FR-010**: cadastro de aluno exige **exatamente uma** turma já cadastrada (rejeita sem turma / turma inexistente).
-- [ ] T027 [US3] Endpoints em `backend/app/api/v1/router_admin.py`: `GET/PUT /admin/mentores/{id}/turmas` (valida contra `config.turmas`).
-- [ ] T028 [US3] Implementar guard/dependência de RBAC por turma reutilizável e aplicá-la em `router_frequencia` e nos endpoints de avaliação (`router_evaluations`/avaliações em `router_admin`).
-- [ ] T029 [P] [US3] Frontend: em `web_admin/src/pages/admin/PessoasPage.tsx` (ou nova seção em Cadastro), permitir atribuir turmas a um mentor; `web_admin/src/services/api.ts` com `getMentorTurmas`/`setMentorTurmas`.
-- [ ] T030 [US3] Escopar a UI do mentor: `FrequenciaPage`/avaliações só listam as turmas do mentor logado (admin vê todas).
+- [x] T026 [P] [US3] Teste de integração em `backend/tests/integration/test_mentor_turma_rbac.py`: mentor fora de escopo → 403 em frequência/avaliação; admin acessa todas; set/get de turmas do mentor; **regressão FR-010**: cadastro de aluno exige **exatamente uma** turma já cadastrada (rejeita sem turma / turma inexistente).
+- [x] T027 [US3] Endpoints em `backend/app/api/v1/router_admin.py`: `GET/PUT /admin/mentores/{id}/turmas` (valida contra `config.turmas`).
+- [x] T028 [US3] Implementar guard/dependência de RBAC por turma reutilizável e aplicá-la em `router_frequencia` e nos endpoints de avaliação (`router_evaluations`/avaliações em `router_admin`).
+- [x] T029 [P] [US3] Frontend: em `web_admin/src/pages/admin/PessoasPage.tsx` (ou nova seção em Cadastro), permitir atribuir turmas a um mentor; `web_admin/src/services/api.ts` com `getMentorTurmas`/`setMentorTurmas`.
+- [x] T030 [US3] Escopar a UI do mentor: `FrequenciaPage`/avaliações só listam as turmas do mentor logado (admin vê todas).
 
 **Checkpoint (US3)**: segregação por turma garantida no servidor e refletida na UI.
 
@@ -91,11 +91,11 @@ description: "Task list for Frequência lançada por mentores"
 **Goal**: Desligar/reativar aluno; Desligado fora das listas ativas, presente em exportações históricas.
 **Independent Test**: desligar some das listas de lançamento/avaliação; aparece em export histórico marcado; reativar volta.
 
-- [ ] T031 [P] [US4] Teste de integração em `backend/tests/integration/test_status_aluno.py`: desligar remove das listas ativas; export histórico inclui Desligado marcado; reativar restaura.
-- [ ] T032 [US4] Endpoint `PUT /admin/alunos/{id}/status` em `backend/app/api/v1/router_admin.py`; `GET /admin/usuarios` passa a expor `status` e aceitar `?status=`.
-- [ ] T033 [US4] Filtrar alunos ATIVOS nas listas ativas: lançamento de frequência, avaliação de LOs e dashboards (`router_frequencia`, avaliações, dashboard).
-- [ ] T034 [US4] Exportações (`router_admin`): relatório de frequência baseado em `Frequencia`; incluir alunos Desligados apenas em relatórios históricos, marcados; remover exportações de pontos do modelo antigo.
-- [ ] T035 [P] [US4] Frontend: em `web_admin/src/pages/admin/PessoasPage.tsx`, exibir e alternar status Ativo/Desligado do aluno; `web_admin/src/services/api.ts` com `setAlunoStatus`.
+- [x] T031 [P] [US4] Teste de integração em `backend/tests/integration/test_status_aluno.py`: desligar remove das listas ativas; export histórico inclui Desligado marcado; reativar restaura.
+- [x] T032 [US4] Endpoint `PUT /admin/alunos/{id}/status` em `backend/app/api/v1/router_admin.py`; `GET /admin/usuarios` passa a expor `status` e aceitar `?status=`.
+- [x] T033 [US4] Filtrar alunos ATIVOS nas listas ativas: lançamento de frequência, avaliação de LOs e dashboards (`router_frequencia`, avaliações, dashboard).
+- [x] T034 [US4] Exportações (`router_admin`): relatório de frequência baseado em `Frequencia`; incluir alunos Desligados apenas em relatórios históricos, marcados; remover exportações de pontos do modelo antigo.
+- [x] T035 [P] [US4] Frontend: em `web_admin/src/pages/admin/PessoasPage.tsx`, exibir e alternar status Ativo/Desligado do aluno; `web_admin/src/services/api.ts` com `setAlunoStatus`.
 
 **Checkpoint (US4)**: status aplicado em listas ativas e exportações.
 
@@ -103,11 +103,11 @@ description: "Task list for Frequência lançada por mentores"
 
 ## Phase 7: Polish & Cross-Cutting
 
-- [ ] T036 [P] Rodar suíte backend com cobertura (`pytest --cov`) e garantir ≥80%; corrigir lacunas.
-- [ ] T037 [P] Rodar frontend `npm run build` + `npm run lint` + E2E/axe; corrigir.
-- [ ] T038 [P] Guards: `rg` sem resíduos de `router_checkin`/`Checkin`/`AtestadosPage`/registro de ALUNO em `backend/app` e `web_admin/src`.
-- [ ] T039 Atualizar documentação (Princípio VI): OpenAPI/Swagger, `README.md`, `docs/ARCHITECTURE.md`, `CHANGELOG.md` — novo modelo de frequência, remoção de autofrequência/login de aluno, mentor–turma, status, atestado-por-turno, aposentadoria do `desktop_app`.
-- [ ] T040 Verificação final via `quickstart.md` (cenários 1–6) em stack ativo.
+- [x] T036 [P] Rodar suíte backend com cobertura (`pytest --cov`) e garantir ≥80%; corrigir lacunas.
+- [x] T037 [P] Rodar frontend `npm run build` + `npm run lint` + E2E/axe; corrigir.
+- [x] T038 [P] Guards: `rg` sem resíduos de `router_checkin`/`Checkin`/`AtestadosPage`/registro de ALUNO em `backend/app` e `web_admin/src`.
+- [x] T039 Atualizar documentação (Princípio VI): OpenAPI/Swagger, `README.md`, `docs/ARCHITECTURE.md`, `CHANGELOG.md` — novo modelo de frequência, remoção de autofrequência/login de aluno, mentor–turma, status, atestado-por-turno, aposentadoria do `desktop_app`.
+- [x] T040 Verificação final via `quickstart.md` (cenários 1–6) em stack ativo.
 
 ---
 
