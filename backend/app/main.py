@@ -1,3 +1,4 @@
+import os
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -23,10 +24,13 @@ async def lifespan(app: FastAPI) -> Any:
 
 app = FastAPI(title="Ponto Digital API", version=settings.APP_VERSION, lifespan=lifespan)
 
-# CORS (allow all in dev)
+# CORS — em produção defina CORS_ORIGINS (origens separadas por vírgula);
+# sem a variável, libera tudo (conveniente em dev).
+_cors_env = os.getenv("CORS_ORIGINS", "").strip()
+_allow_origins = [o.strip() for o in _cors_env.split(",") if o.strip()] or ["*"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_allow_origins,
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],

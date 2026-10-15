@@ -1,0 +1,24 @@
+# Render Blueprint — backend FastAPI (Docker).
+# O frontend vai no Cloudflare Pages (ver DEPLOY.md), não aqui.
+# No Render: New + → "Blueprint" → aponte para este repositório.
+services:
+  - type: web
+    name: ponto-digital-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    region: oregon
+    healthCheckPath: /api/v1/health
+    autoDeploy: true
+    envVars:
+      # URL do Neon no formato async + SSL, ex.:
+      #   postgresql+asyncpg://USER:PASS@HOST/neondb?ssl=require
+      - key: DATABASE_URL
+        sync: false
+      # Segredo do JWT — o Render gera um valor forte automaticamente.
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      # Origem do frontend no Cloudflare Pages, ex.: https://ponto-digital.pages.dev
+      - key: CORS_ORIGINS
+        sync: false
