@@ -10,6 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@fontsource/inter": "^5.3.0",
+    "@fontsource/poppins": "^5.3.0",
     "autoprefixer": "^10.6.1",
     "axios": "^1.20.0",
     "lucide-react": "^1.48.0",

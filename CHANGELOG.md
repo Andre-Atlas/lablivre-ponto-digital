@@ -1,6 +1,17 @@
 # Changelog
 
 ## [Unreleased]
+### Changed
+- **Design System Lab Livre (web_admin)**: Toda a interface do painel web foi padronizada em um design system único derivado da identidade visual oficial do Lab Livre ("Design V3").
+  - **Tokens** centralizados em `web_admin/src/index.css` (`@theme` do Tailwind v4): paleta (roxo `#7023E8`, laranja, navy `#080056`, lavanda, pêssego, verde/vermelho semânticos), tipografia (Poppins para títulos + Inter para corpo, **auto-hospedadas**, sem requisições a CDN externo), raios, elevação e motion. Nenhuma cor fixa (hex) permanece na marcação das telas.
+  - **Biblioteca de componentes** reutilizável em `web_admin/src/components/ui/` (Button, Card, Input, Select, Textarea, Badge, Table, Modal, Tabs, Alert/Toast, PageHeader, StatCallout, Blob, EmptyState) com estados completos (hover, foco visível, desabilitado, erro, carregando, vazio), semântica ARIA e navegação por teclado.
+  - **Todas as telas** (Login, Check-in, Dashboard e os painéis de Atestados, Avaliações, Catálogo e Dashboard de LOs) foram reconstruídas sobre o design system, preservando todo o comportamento e os fluxos de dados existentes. Branding expressivo (blobs, hero) nas telas de entrada; visual sóbrio nas telas densas de dados.
+  - **Acessibilidade**: contraste WCAG AA verificado (axe) sem violações sérias nas telas principais; responsivo de ~375px ao desktop; `prefers-reduced-motion` respeitado.
+  - Página de _styleguide_ de desenvolvimento em `/styleguide`.
+
+### Removed
+- **Tema escuro (dark mode)** do painel web: a plataforma passa a ter um único tema claro, alinhado à identidade de marca. Removidos o `ThemeToggle`, o estado de tema e todas as variantes `dark:`.
+
 ### Added
 - **Avaliação Semanal de Learning Outcomes (LOs)**: Mentores (STAFF/ADMIN) avaliam cada aluno (`ALUNO`) por semana, atribuindo um nível de 1 a 4 por objetivo de aprendizagem, com comentários; o formulário pré-preenche os últimos níveis conhecidos do aluno.
   - **Catálogo de LOs** gerenciável por administradores (criar, editar, desativar — histórico preservado).

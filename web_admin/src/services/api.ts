@@ -13,7 +13,7 @@ export const fetchUsers = async (): Promise<User[]> => {
   const res = await fetch(`${API_URL}/admin/usuarios`, {
     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
   });
-  if (!res.ok) throw new Error('Failed to fetch users');
+  if (!res.ok) throw new Error('Não foi possível carregar as pessoas.');
   return res.json();
 };
 
@@ -22,7 +22,7 @@ export const approveUser = async (id: string | number): Promise<void> => {
     method: 'POST',
     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
   });
-  if (!res.ok) throw new Error('Failed to approve user');
+  if (!res.ok) throw new Error('Não foi possível autorizar a pessoa.');
 };
 
 export const adminLogin = async (email: string, password: string): Promise<{ access_token: string }> => {
@@ -31,7 +31,42 @@ export const adminLogin = async (email: string, password: string): Promise<{ acc
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password })
   });
-  if (!res.ok) throw new Error('Login failed');
+  if (!res.ok) throw new Error('Não foi possível entrar. Verifique suas credenciais.');
+  return res.json();
+};
+
+// ─────────────────────────── Turmas ───────────────────────────
+
+export const listTurmas = async (): Promise<string[]> => {
+  const res = await fetch(`${API_URL}/admin/turmas`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+  });
+  if (!res.ok) throw new Error('Não foi possível listar turmas');
+  return res.json();
+};
+
+export const createTurma = async (nome: string): Promise<string[]> => {
+  const res = await fetch(`${API_URL}/admin/turmas`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
+    body: JSON.stringify({ nome }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(typeof data.detail === 'string' ? data.detail : 'Não foi possível cadastrar turma');
+  }
+  return res.json();
+};
+
+export const deleteTurma = async (nome: string): Promise<string[]> => {
+  const res = await fetch(`${API_URL}/admin/turmas/${encodeURIComponent(nome)}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(typeof data.detail === 'string' ? data.detail : 'Não foi possível remover turma');
+  }
   return res.json();
 };
 
@@ -44,7 +79,7 @@ export const createStudent = async (nome: string, email: string, turma: string):
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
     const msg = typeof data.detail === 'string' ? data.detail
-      : (Array.isArray(data.detail) ? data.detail.map((d: any) => d.msg).join(', ') : 'Falha ao registrar aluno');
+      : (Array.isArray(data.detail) ? data.detail.map((d: any) => d.msg).join(', ') : 'Não foi possível registrar aluno');
     throw new Error(msg);
   }
 };
@@ -60,7 +95,7 @@ export const createAdmin = async (nome: string, email: string, senha: string, ro
   });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
-    const errorMessage = typeof data.detail === 'string' ? data.detail : (Array.isArray(data.detail) ? data.detail.map((d: any) => d.msg).join(', ') : 'Failed to create admin');
+    const errorMessage = typeof data.detail === 'string' ? data.detail : (Array.isArray(data.detail) ? data.detail.map((d: any) => d.msg).join(', ') : 'Não foi possível criar o acesso.');
     throw new Error(errorMessage);
   }
 };
@@ -72,7 +107,7 @@ export const deleteUser = async (id: string | number): Promise<void> => {
   });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
-    throw new Error(data.detail || 'Failed to delete user');
+    throw new Error(data.detail || 'Não foi possível excluir a pessoa.');
   }
 };
 
@@ -84,7 +119,7 @@ export const updateRole = async (id: string | number, role: string): Promise<voi
   });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
-    throw new Error(data.detail || 'Failed to update role');
+    throw new Error(data.detail || 'Não foi possível alterar o cargo.');
   }
 };
 
@@ -145,7 +180,7 @@ export const recordCertificate = async (
     headers: authHeader(),
     body: form,
   });
-  if (!res.ok) throw new Error(await parseError(res, 'Falha ao registrar atestado'));
+  if (!res.ok) throw new Error(await parseError(res, 'Não foi possível registrar atestado'));
   return res.json();
 };
 
@@ -160,13 +195,13 @@ export const listCertificates = async (
   const res = await fetch(`${API_URL}/admin/certificados${qs ? `?${qs}` : ''}`, {
     headers: authHeader(),
   });
-  if (!res.ok) throw new Error(await parseError(res, 'Falha ao listar atestados'));
+  if (!res.ok) throw new Error(await parseError(res, 'Não foi possível listar atestados'));
   return res.json();
 };
 
 export const getCertificate = async (id: string): Promise<Certificate> => {
   const res = await fetch(`${API_URL}/admin/certificados/${id}`, { headers: authHeader() });
-  if (!res.ok) throw new Error(await parseError(res, 'Falha ao carregar atestado'));
+  if (!res.ok) throw new Error(await parseError(res, 'Não foi possível carregar atestado'));
   return res.json();
 };
 
@@ -174,7 +209,7 @@ export const openCertificateDocument = async (id: string): Promise<void> => {
   const res = await fetch(`${API_URL}/admin/certificados/${id}/documento`, {
     headers: authHeader(),
   });
-  if (!res.ok) throw new Error(await parseError(res, 'Falha ao abrir documento'));
+  if (!res.ok) throw new Error(await parseError(res, 'Não foi possível abrir documento'));
   const blob = await res.blob();
   const url = URL.createObjectURL(blob);
   window.open(url, '_blank', 'noopener');
@@ -187,8 +222,26 @@ export const revokeCertificate = async (id: string, motivo?: string): Promise<Ce
     headers: { 'Content-Type': 'application/json', ...authHeader() },
     body: JSON.stringify({ motivo: motivo ?? null }),
   });
-  if (!res.ok) throw new Error(await parseError(res, 'Falha ao revogar atestado'));
+  if (!res.ok) throw new Error(await parseError(res, 'Não foi possível revogar atestado'));
   return res.json();
+};
+
+/** Download an admin export (checkins/usuarios …) as a file. */
+export const adminExport = async (endpoint: string, filename: string): Promise<void> => {
+  const res = await fetch(`${API_URL}/admin/export/${endpoint}`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+  });
+  if (!res.ok) throw new Error('Não foi possível exportar');
+  const blob = await res.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.style.display = 'none';
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  window.URL.revokeObjectURL(url);
+  document.body.removeChild(a);
 };
 
 export const justificarFalta = async (id: string | number, data: string, turno: string): Promise<void> => {
@@ -202,7 +255,7 @@ export const justificarFalta = async (id: string | number, data: string, turno: 
   });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
-    throw new Error(data.detail || 'Falha ao justificar falta');
+    throw new Error(data.detail || 'Não foi possível justificar falta');
   }
 };
 
@@ -269,7 +322,7 @@ export const listLearningOutcomes = async (incluirInativos = false): Promise<Lea
   const res = await fetch(`${API_URL}/admin/los?incluir_inativos=${incluirInativos}`, {
     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
   });
-  if (!res.ok) throw new Error(await parseError(res, 'Falha ao listar LOs'));
+  if (!res.ok) throw new Error(await parseError(res, 'Não foi possível listar LOs'));
   return res.json();
 };
 
@@ -280,7 +333,7 @@ export const createLearningOutcome = async (
     method: 'POST', headers: authHeaderJson(),
     body: JSON.stringify({ numero, nome, descricao: descricao ?? null }),
   });
-  if (!res.ok) throw new Error(await parseError(res, 'Falha ao criar LO'));
+  if (!res.ok) throw new Error(await parseError(res, 'Não foi possível criar LO'));
   return res.json();
 };
 
@@ -290,7 +343,7 @@ export const updateLearningOutcome = async (
   const res = await fetch(`${API_URL}/admin/los/${id}`, {
     method: 'PUT', headers: authHeaderJson(), body: JSON.stringify(patch),
   });
-  if (!res.ok) throw new Error(await parseError(res, 'Falha ao atualizar LO'));
+  if (!res.ok) throw new Error(await parseError(res, 'Não foi possível atualizar LO'));
   return res.json();
 };
 
@@ -298,7 +351,7 @@ export const getProgramConfig = async (): Promise<ProgramConfig> => {
   const res = await fetch(`${API_URL}/admin/avaliacoes/config`, {
     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
   });
-  if (!res.ok) throw new Error(await parseError(res, 'Falha ao carregar configuração'));
+  if (!res.ok) throw new Error(await parseError(res, 'Não foi possível carregar configuração'));
   return res.json();
 };
 
@@ -306,7 +359,7 @@ export const getPrefill = async (userId: string, semana: number): Promise<Record
   const res = await fetch(`${API_URL}/admin/avaliacoes/prefill?user_id=${userId}&semana=${semana}`, {
     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
   });
-  if (!res.ok) throw new Error(await parseError(res, 'Falha ao carregar níveis anteriores'));
+  if (!res.ok) throw new Error(await parseError(res, 'Não foi possível carregar níveis anteriores'));
   return (await res.json()).niveis;
 };
 
@@ -314,7 +367,7 @@ export const getEvaluation = async (userId: string, semana: number): Promise<Eva
   const res = await fetch(`${API_URL}/admin/avaliacoes?user_id=${userId}&semana=${semana}`, {
     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
   });
-  if (!res.ok) throw new Error(await parseError(res, 'Falha ao carregar avaliação'));
+  if (!res.ok) throw new Error(await parseError(res, 'Não foi possível carregar avaliação'));
   return res.json();
 };
 
@@ -325,7 +378,7 @@ export const submitEvaluation = async (
     method: 'POST', headers: authHeaderJson(),
     body: JSON.stringify({ user_id: userId, semana, niveis, comentario: comentario ?? null }),
   });
-  if (!res.ok) throw new Error(await parseError(res, 'Falha ao salvar avaliação'));
+  if (!res.ok) throw new Error(await parseError(res, 'Não foi possível salvar avaliação'));
   return res.json();
 };
 
@@ -334,7 +387,7 @@ export const getDashboard = async (turma: string, semana: number): Promise<Dashb
     `${API_URL}/admin/avaliacoes/dashboard?turma=${encodeURIComponent(turma)}&semana=${semana}`,
     { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } },
   );
-  if (!res.ok) throw new Error(await parseError(res, 'Falha ao carregar dashboard'));
+  if (!res.ok) throw new Error(await parseError(res, 'Não foi possível carregar dashboard'));
   return res.json();
 };
 
@@ -345,7 +398,7 @@ export const exportWeeklyReport = async (
     `${API_URL}/admin/avaliacoes/export?turma=${encodeURIComponent(turma)}&semana=${semana}&format=${formato}`,
     { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } },
   );
-  if (!res.ok) throw new Error(await parseError(res, 'Falha ao exportar'));
+  if (!res.ok) throw new Error(await parseError(res, 'Não foi possível exportar'));
   const blob = await res.blob();
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

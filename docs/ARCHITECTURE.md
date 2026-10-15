@@ -37,12 +37,29 @@ flowchart TD
 ### 1. Frontend (`web_admin`)
 Responsável pela interface do usuário (UI). Foi construído com foco em leveza e responsividade.
 - **Framework:** React com TypeScript, empacotado via Vite.
-- **Estilização:** Tailwind CSS (tema Light/Dark automático).
+- **Estilização:** Tailwind CSS v4 (CSS-first `@theme`, sem `tailwind.config.js`) sobre o **Design System Lab Livre** — tema claro único.
 - **Ícones:** Lucide React.
 - **Roteamento e Funcionalidades:**
   - `/ponto`: Tela interativa e segura onde alunos e staff batem o ponto, visualizam saldo de horas e editam seus perfis (nome e senha).
   - `/dashboard`: Painel Administrativo. Permite aos admins verificar quem está no lab, exportar relatórios avançados (CSV/Excel), autorizar check-ins em lote e editar cargos/turmas dos usuários.
 - **Autenticação:** Baseada em JWT (Bearer Token) armazenado no LocalStorage. Nenhuma sessão de cookies é utilizada (stateless).
+
+#### Design System Lab Livre
+
+Toda a UI do painel é construída sobre um design system único derivado da identidade
+oficial do Lab Livre (referência "Design V3"). Especificação: `specs/004-lab-livre-design-system/`.
+
+- **Tokens** (fonte única de verdade) no bloco `@theme` de `web_admin/src/index.css`:
+  paleta de marca (roxo `#7023E8`, laranja, navy `#080056`, lavanda, pêssego, semânticos),
+  tipografia (**Poppins** títulos + **Inter** corpo, **auto-hospedadas** via `@fontsource`,
+  sem CDN externo), raios, elevação e motion. A marcação não contém cores hex fixas.
+- **Biblioteca de componentes** em `web_admin/src/components/ui/` (Button, Card, Input,
+  Select, Textarea, Badge, Table, Modal, Tabs, Alert/Toast, PageHeader, StatCallout, Blob,
+  EmptyState), com estados completos, semântica ARIA e navegação por teclado. Chrome
+  compartilhado: `AppHeader`, `AppFooter`, `LabLivreLogo`. Styleguide em `/styleguide`.
+- **Boas práticas:** contraste WCAG AA (verificado com axe), responsivo (~375px → desktop),
+  `prefers-reduced-motion` honrado, tema claro único (dark mode removido). Nenhuma dependência
+  pesada nova (apenas `@fontsource/*` auto-hospedadas e `@axe-core/playwright` nos testes).
 
 #### Avaliação Semanal de Learning Outcomes (LOs)
 
