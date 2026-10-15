@@ -3,6 +3,7 @@ from __future__ import annotations
 import calendar
 import csv
 import io
+import json
 import uuid
 from datetime import UTC, datetime, timedelta, timezone
 from typing import Any
@@ -17,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.adapters.persistence.database import get_db
 from app.adapters.persistence.orm_models import Checkin as CheckInModel
+from app.adapters.persistence.orm_models import Config as ConfigModel
 from app.adapters.persistence.orm_models import Device as DeviceModel
 from app.adapters.persistence.orm_models import User as UserModel
 from app.api.middleware.auth_dependencies import get_current_user
@@ -117,6 +119,80 @@ async def create_admin(
     return {"message": f"Administrador {new_admin.nome} criado com sucesso."}
 
 
+# ─────────────────────────── Turmas (cadastro) ───────────────────────────
+
+TURMAS_CONFIG_KEY = "turmas"
+
+
+async def _get_turmas(db: AsyncSession) -> list[str]:
+    """Lista de turmas cadastradas (armazenadas como JSON na tabela config)."""
+    res = await db.execute(select(ConfigModel).where(ConfigModel.chave == TURMAS_CONFIG_KEY))
+    row = res.scalars().first()
+    if not row or not row.valor:
+        return []
+    try:
+        data = json.loads(row.valor)
+    except (ValueError, TypeError):
+        return []
+    return [str(t) for t in data] if isinstance(data, list) else []
+
+
+async def _set_turmas(db: AsyncSession, turmas: list[str]) -> None:
+    res = await db.execute(select(ConfigModel).where(ConfigModel.chave == TURMAS_CONFIG_KEY))
+    row = res.scalars().first()
+    now = datetime.now(UTC)
+    valor = json.dumps(turmas, ensure_ascii=False)
+    if row:
+        row.valor = valor
+        row.atualizado_em = now
+    else:
+        db.add(ConfigModel(chave=TURMAS_CONFIG_KEY, valor=valor, atualizado_em=now))
+    await db.commit()
+
+
+@router.get("/turmas")
+async def list_turmas(
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(require_admin),
+) -> list[str]:
+    return sorted(await _get_turmas(db))
+
+
+class TurmaRequest(BaseModel):
+    nome: str
+
+
+@router.post("/turmas", status_code=201)
+async def create_turma(
+    request: TurmaRequest,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(require_admin),
+) -> list[str]:
+    nome = request.nome.strip()
+    if not nome:
+        raise HTTPException(status_code=400, detail="Nome da turma é obrigatório.")
+    turmas = await _get_turmas(db)
+    if any(t.lower() == nome.lower() for t in turmas):
+        raise HTTPException(status_code=409, detail="Turma já cadastrada.")
+    turmas.append(nome)
+    await _set_turmas(db, turmas)
+    return sorted(turmas)
+
+
+@router.delete("/turmas/{nome}")
+async def delete_turma(
+    nome: str,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(require_admin),
+) -> list[str]:
+    turmas = await _get_turmas(db)
+    novas = [t for t in turmas if t.lower() != nome.strip().lower()]
+    if len(novas) == len(turmas):
+        raise HTTPException(status_code=404, detail="Turma não encontrada.")
+    await _set_turmas(db, novas)
+    return sorted(novas)
+
+
 class CreateAlunoRequest(BaseModel):
     nome: str
     email: str
@@ -134,6 +210,11 @@ async def create_aluno(
         raise HTTPException(status_code=400, detail="Nome e e-mail são obrigatórios.")
     if not request.turma_ou_equipe.strip():
         raise HTTPException(status_code=400, detail="Turma é obrigatória.")
+    turmas = await _get_turmas(db)
+    if request.turma_ou_equipe.strip() not in turmas:
+        raise HTTPException(
+            status_code=400, detail="Turma não cadastrada. Cadastre a turma antes de registrar o aluno."
+        )
     existing = await db.execute(select(UserModel).where(UserModel.email == request.email))
     if existing.scalars().first():
         raise HTTPException(status_code=409, detail="E-mail já cadastrado.")
