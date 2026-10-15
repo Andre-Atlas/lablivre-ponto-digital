@@ -22,7 +22,14 @@ from sqlalchemy import (
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
-from app.domain.enums import CertificateStatus, RoleAdmin, StatusCheckin, TipoUsuario
+from app.domain.enums import (
+    CertificateStatus,
+    RoleAdmin,
+    StatusAluno,
+    StatusCheckin,
+    StatusFrequencia,
+    TipoUsuario,
+)
 
 
 class Base(DeclarativeBase):
@@ -46,6 +53,10 @@ class User(Base):
     patrimonio: Mapped[str | None] = mapped_column(String(100), nullable=True)
     ativo: Mapped[bool] = mapped_column(Boolean, default=True)
     admin_aprovado: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Situação do aluno no programa (aplicável a tipo=ALUNO).
+    status: Mapped[StatusAluno] = mapped_column(
+        SAEnum(StatusAluno), default=StatusAluno.ATIVO, server_default="ATIVO", nullable=False
+    )
     criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     atualizado_em: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
@@ -346,4 +357,54 @@ class EvaluationComment(Base):
 
     __table_args__ = (
         UniqueConstraint("evaluation_id", "mentor_id", name="uq_comment_evaluation_mentor"),
+    )
+
+
+class MentorTurma(Base):
+    """Vínculo N–N entre mentor (usuário STAFF/ADMIN) e turma (nome)."""
+
+    __tablename__ = "mentor_turmas"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    turma: Mapped[str] = mapped_column(String(100), nullable=False)
+    criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "turma", name="uq_mentor_turma"),
+        Index("ix_mentor_turmas_turma", "turma"),
+    )
+
+
+class Frequencia(Base):
+    """Lançamento de frequência feito por um mentor (fonte de verdade da presença)."""
+
+    __tablename__ = "frequencias"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    aluno_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    turma: Mapped[str] = mapped_column(String(100), nullable=False)
+    data: Mapped[date] = mapped_column(Date, nullable=False)
+    turno: Mapped[str] = mapped_column(String(10), nullable=False)
+    status: Mapped[StatusFrequencia] = mapped_column(SAEnum(StatusFrequencia), nullable=False)
+    mentor_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    # Atestado anexado por turno (quando Falta justificada); cobre apenas este lançamento.
+    atestado_documento: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
+    atestado_filename: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    atestado_content_type: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    observacao: Mapped[str | None] = mapped_column(Text, nullable=True)
+    criado_em: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    atualizado_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    __table_args__ = (
+        UniqueConstraint("aluno_id", "data", "turno", name="uq_frequencia_aluno_data_turno"),
+        Index("ix_frequencias_turma_data_turno", "turma", "data", "turno"),
     )

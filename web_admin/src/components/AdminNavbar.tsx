@@ -35,7 +35,7 @@ export function AdminNavbar({ onLogout }: { onLogout: () => void }) {
             <NavLink to="/avaliacoes/dashboard" className={navLinkCls}>Dashboard</NavLink>
             <NavLink to="/pessoas" className={navLinkCls}>Pessoas</NavLink>
             <NavLink to="/avaliacoes/avaliar" className={navLinkCls}>Avaliação</NavLink>
-            <NavLink to="/atestados" className={navLinkCls}>Atestados</NavLink>
+            <NavLink to="/frequencia" className={navLinkCls}>Frequência</NavLink>
 
             <Menu triggerClassName={triggerCls} label={<>Cadastro <ChevronDown size={14} /></>}>
               {(close) => (
@@ -93,8 +93,8 @@ export function AdminNavbar({ onLogout }: { onLogout: () => void }) {
           <MobileGroup title="Avaliação">
             <MobileLink onClick={() => { go('/avaliacoes/avaliar'); setMobileOpen(false); }} icon={<ClipboardList size={16} />}>Avaliação</MobileLink>
           </MobileGroup>
-          <MobileGroup title="Atestados">
-            <MobileLink onClick={() => { go('/atestados'); setMobileOpen(false); }} icon={<FileText size={16} />}>Atestados</MobileLink>
+          <MobileGroup title="Frequência">
+            <MobileLink onClick={() => { go('/frequencia'); setMobileOpen(false); }} icon={<FileText size={16} />}>Frequência</MobileLink>
           </MobileGroup>
           <MobileGroup title="Cadastro">
             <MobileLink onClick={() => { go('/registrar/turma'); setMobileOpen(false); }} icon={<Users2 size={16} />}>Turma</MobileLink>

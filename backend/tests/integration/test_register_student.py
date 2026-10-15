@@ -2,11 +2,14 @@
 
 import uuid
 from collections.abc import AsyncGenerator
+from datetime import UTC, datetime
 
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
+from app.adapters.persistence.database import async_session_maker
+from app.adapters.persistence.orm_models import Config as ConfigModel
 from app.domain.enums import RoleAdmin, TipoUsuario
 from app.main import app
 from tests.integration.lo_fixtures import auth, cleanup, seed_user
@@ -16,8 +19,25 @@ def _client() -> AsyncClient:
     return AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver")
 
 
+async def _seed_turmas(*nomes: str) -> None:
+    import json
+
+    async with async_session_maker() as s:
+        await s.execute(ConfigModel.__table__.delete().where(ConfigModel.chave == "turmas"))
+        s.add(
+            ConfigModel(
+                id=uuid.uuid4(),
+                chave="turmas",
+                valor=json.dumps(list(nomes)),
+                atualizado_em=datetime.now(UTC),
+            )
+        )
+        await s.commit()
+
+
 @pytest_asyncio.fixture
 async def actors() -> AsyncGenerator[dict, None]:
+    await _seed_turmas("Turma 1")
     admin = await seed_user(tipo=TipoUsuario.STAFF, role=RoleAdmin.ADMIN, turma="Turma 1", nome="Admin")
     staff = await seed_user(tipo=TipoUsuario.STAFF, role=RoleAdmin.NONE, turma="Turma 1", nome="Staff")
     yield {"admin": admin, "staff": staff}

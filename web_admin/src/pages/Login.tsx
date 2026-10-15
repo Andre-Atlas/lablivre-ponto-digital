@@ -3,19 +3,12 @@ import { ChevronRight, Eye, EyeOff } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { LabLivreLogo } from '../components/LabLivreLogo';
 import { API_URL } from '../services/api';
-import { Button, Input, Select, Alert, Blob } from '../components/ui';
+import { Button, Input, Alert, Blob } from '../components/ui';
 
 export function Login({ onLogin }: { onLogin: (tipo: string) => void }) {
-  const [mode, setMode] = useState<'login' | 'register'>('login');
-
-  const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
-  const [turma, setTurma] = useState('');
-  const [numeroMaquina, setNumeroMaquina] = useState('');
-
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -24,45 +17,18 @@ export function Login({ onLogin }: { onLogin: (tipo: string) => void }) {
     try {
       setIsLoading(true);
       setError('');
-      setSuccess('');
-
-      if (mode === 'login') {
-        const res = await fetch(`${API_URL}/auth/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, senha }),
-        });
-
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.detail || 'Falha no login. Verifique suas credenciais.');
-        }
-
-        const data = await res.json();
-        localStorage.setItem('token', data.access_token);
-        onLogin(data.tipo || 'ALUNO');
-      } else {
-        const res = await fetch(`${API_URL}/auth/register`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            nome,
-            email,
-            senha,
-            turma,
-            numero_maquina: parseInt(numeroMaquina, 10) || 0,
-          }),
-        });
-
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.detail || 'Falha no cadastro. Verifique os dados.');
-        }
-
-        setSuccess('Cadastro realizado com sucesso! Faça login.');
-        setMode('login');
-        setSenha('');
+      const res = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, senha }),
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || 'Não foi possível entrar. Verifique suas credenciais.');
       }
+      const data = await res.json();
+      localStorage.setItem('token', data.access_token);
+      onLogin(data.tipo || 'STAFF');
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -83,7 +49,7 @@ export function Login({ onLogin }: { onLogin: (tipo: string) => void }) {
             O hub central de<br className="hidden lg:block" /> controle e acesso.
           </h1>
           <p className="mx-auto mt-6 max-w-[46ch] text-base leading-relaxed text-text lg:mx-0">
-            Gerencie credenciais, realize seu check-in e monitore o fluxo de ponto do Lab Livre em tempo real.
+            Lance a frequência, avalie os LOs e acompanhe a evolução das turmas do Lab Livre.
           </p>
 
           <div className="mt-10 hidden items-center gap-5 lg:flex">
@@ -107,49 +73,13 @@ export function Login({ onLogin }: { onLogin: (tipo: string) => void }) {
       {/* ── Auth panel ── */}
       <div className="relative z-10 flex w-full items-center justify-center p-6 pb-16 sm:p-12 lg:w-1/2 lg:py-0">
         <div className="w-full max-w-md rounded-card border border-border/60 bg-surface p-8 shadow-pop sm:p-10">
-          <div className="mb-8 flex rounded-lg bg-bg p-1">
-            {(['login', 'register'] as const).map((m) => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => { setMode(m); setError(''); setSuccess(''); }}
-                aria-pressed={mode === m}
-                className={`flex-1 rounded-md py-2 text-sm font-semibold transition-colors ${
-                  mode === m ? 'bg-surface text-primary shadow-sm' : 'text-muted hover:text-ink'
-                }`}
-              >
-                {m === 'login' ? 'Entrar' : 'Criar conta'}
-              </button>
-            ))}
-          </div>
-
-          <h2 className="mb-1 text-2xl font-bold tracking-tight text-ink">
-            {mode === 'login' ? 'Entrar na plataforma' : 'Criar conta'}
-          </h2>
-          <p className="mb-6 text-sm text-muted">
-            {mode === 'login' ? 'Use seu e-mail e senha para continuar.' : 'Preencha seus dados para começar.'}
-          </p>
+          <h2 className="mb-1 text-2xl font-bold tracking-tight text-ink">Entrar na plataforma</h2>
+          <p className="mb-6 text-sm text-muted">Acesso restrito a mentores. Use seu e-mail e senha para continuar.</p>
 
           {error && <Alert tone="danger" className="mb-5">{error}</Alert>}
-          {success && <Alert tone="success" className="mb-5">{success}</Alert>}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {mode === 'register' && (
-              <Input label="Nome completo" required placeholder="Seu nome" value={nome} onChange={(e) => setNome(e.target.value)} />
-            )}
-
             <Input label="E-mail" type="email" required placeholder="nome@lablivre.com" value={email} onChange={(e) => setEmail(e.target.value)} />
-
-            {mode === 'register' && (
-              <div className="grid grid-cols-2 gap-4">
-                <Select label="Turma" required value={turma} onChange={(e) => setTurma(e.target.value)}>
-                  <option value="" disabled>Selecione</option>
-                  <option value="Turma 1">Turma 1</option>
-                  <option value="Turma 2">Turma 2</option>
-                </Select>
-                <Input label="Máquina" type="number" required placeholder="Ex: 12" value={numeroMaquina} onChange={(e) => setNumeroMaquina(e.target.value)} />
-              </div>
-            )}
 
             <div className="relative">
               <Input
@@ -172,7 +102,7 @@ export function Login({ onLogin }: { onLogin: (tipo: string) => void }) {
             </div>
 
             <Button type="submit" fullWidth loading={isLoading} iconRight={!isLoading ? <ChevronRight size={16} /> : undefined} className="mt-2">
-              {mode === 'login' ? 'Entrar' : 'Criar conta'}
+              Entrar
             </Button>
           </form>
         </div>

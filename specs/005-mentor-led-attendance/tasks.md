@@ -18,17 +18,17 @@ description: "Task list for Frequência lançada por mentores"
 
 ## Phase 1: Setup
 
-- [ ] T001 Confirmar baseline de migração (único head Alembic) em `backend/migrations/` e criar branch de trabalho a partir da base integrada.
-- [ ] T002 [P] Levantar inventário dos pontos a remover (autofrequência/login de aluno/aba Atestados) com `rg`: `router_checkin`, `/checkin`, `Checkin.tsx`, `AtestadosPage`, registro/login de ALUNO — anotar em um checklist local para as fases US1/US2.
+- [x] T001 Confirmar baseline de migração (único head Alembic) em `backend/migrations/` e criar branch de trabalho a partir da base integrada.
+- [x] T002 [P] Levantar inventário dos pontos a remover (autofrequência/login de aluno/aba Atestados) com `rg`: `router_checkin`, `/checkin`, `Checkin.tsx`, `AtestadosPage`, registro/login de ALUNO — anotar em um checklist local para as fases US1/US2.
 
 ## Phase 2: Foundational (BLOQUEIA todas as histórias)
 
-- [ ] T003 [P] Adicionar enums `StatusAluno` (ATIVO/DESLIGADO) e `StatusFrequencia` (PRESENTE/FALTA/JUSTIFICADO) em `backend/app/domain/enums.py`.
-- [ ] T004 Adicionar ORM em `backend/app/adapters/persistence/orm_models.py`: coluna `status` em `User` (default ATIVO), tabela `mentor_turmas` (user_id, turma, único) e tabela `frequencias` (aluno_id, turma, data, turno, status, mentor_id, atestado_documento/filename/content_type, observacao, timestamps; único por aluno/data/turno).
-- [ ] T005 Criar migração Alembic em `backend/migrations/versions/` que cria `mentor_turmas`, `frequencias` e `users.status`, e **descarta** os dados de `checkins` (modelo de autofrequência). Preserva atestados/avaliações.
-- [ ] T006 [P] Adicionar dataclasses/validações de domínio em `backend/app/domain/models.py`: `Frequencia` + regras de transição de status e validação de atestado-por-turno.
-- [ ] T007 [P] Criar porta `backend/app/domain/ports/frequencia_repository.py` (interface do repositório de frequência).
-- [ ] T008 Atualizar `backend/tests/conftest.py` para criar as novas tabelas no schema de teste (sqlite) e remover dependências de `checkins` nos fixtures.
+- [x] T003 [P] Adicionar enums `StatusAluno` (ATIVO/DESLIGADO) e `StatusFrequencia` (PRESENTE/FALTA/JUSTIFICADO) em `backend/app/domain/enums.py`.
+- [x] T004 Adicionar ORM em `backend/app/adapters/persistence/orm_models.py`: coluna `status` em `User` (default ATIVO), tabela `mentor_turmas` (user_id, turma, único) e tabela `frequencias` (aluno_id, turma, data, turno, status, mentor_id, atestado_documento/filename/content_type, observacao, timestamps; único por aluno/data/turno).
+- [x] T005 Criar migração Alembic em `backend/migrations/versions/` que cria `mentor_turmas`, `frequencias` e `users.status`, e **descarta** os dados de `checkins` (modelo de autofrequência). Preserva atestados/avaliações.
+- [x] T006 [P] Adicionar dataclasses/validações de domínio em `backend/app/domain/models.py`: `Frequencia` + regras de transição de status e validação de atestado-por-turno.
+- [x] T007 [P] Criar porta `backend/app/domain/ports/frequencia_repository.py` (interface do repositório de frequência).
+- [x] T008 Atualizar `backend/tests/conftest.py` para criar as novas tabelas no schema de teste (sqlite) e remover dependências de `checkins` nos fixtures.
 
 **Checkpoint**: schema novo aplica em sqlite; domínio compila; nenhuma lógica de produto ainda.
 
@@ -39,17 +39,17 @@ description: "Task list for Frequência lançada por mentores"
 **Goal**: Mentor lança Presente/Falta por turma/data/turno e atrela atestado por turno; sem aba de Atestados.
 **Independent Test**: lançar frequência de uma turma, reabrir e ver persistido; marcar Falta + anexar atestado → Justificado.
 
-- [ ] T009 [P] [US1] Teste de domínio em `backend/tests/unit/test_frequencia_domain.py`: transições PRESENTE↔FALTA, FALTA→JUSTIFICADO ao anexar atestado, atestado proibido em PRESENTE.
-- [ ] T010 [P] [US1] Teste de integração em `backend/tests/integration/test_frequencia_api.py`: upsert idempotente por (aluno,data,turno); anexar/baixar/remover atestado; 400 atestado em Presente.
-- [ ] T011 [US1] Implementar `backend/app/adapters/persistence/frequencia_repo_impl.py` (upsert por aluno/data/turno, consulta por turma/data/turno, anexar/remover atestado).
-- [ ] T012 [US1] Implementar `backend/app/application/frequencia_use_case.py` (lançar lista, atrelar/remover atestado, aplicar transições e regras).
-- [ ] T013 [US1] Criar `backend/app/api/schemas/frequencia_schemas.py` (lançamento, item, resposta com status + flag de atestado).
-- [ ] T014 [US1] Criar `backend/app/api/v1/router_frequencia.py` com `GET /frequencia`, `POST /frequencia`, `POST/GET/DELETE /frequencia/{id}/atestado`; registrar em `backend/app/main.py`.
-- [ ] T015 [P] [US1] Cliente de API em `web_admin/src/services/api.ts`: `getFrequencia`, `lancarFrequencia`, `anexarAtestado`, `removerAtestado`, `baixarAtestado`.
-- [ ] T016 [US1] Criar `web_admin/src/pages/admin/FrequenciaPage.tsx`: seletor turma/data/turno, lista de alunos ATIVOS, marcação individual Presente/Falta, anexo de atestado por aluno em Falta, salvar (upsert), estados loading/empty/erro.
-- [ ] T017 [US1] Remover a aba Atestados: deletar `web_admin/src/pages/admin/AtestadosPage.tsx`, rota em `web_admin/src/App.tsx` e item "Atestados" em `web_admin/src/components/AdminNavbar.tsx`; adicionar item/rota "Frequência".
-- [ ] T018 [US1] Definir o destino do atestado antigo (feature 001): manter `MedicalCertificate`/`CertificateDay` **apenas como histórico somente-leitura** (sem aba, sem novas criações por período); o novo documento de atestado é armazenado em `frequencias.atestado_documento`, **sem consolidar** os dois acervos (decisão explícita — ver A2 da análise). Remover a exposição de `router_certificates` como aba e limpar imports órfãos em `backend/app/main.py` e `web_admin/src`.
-- [ ] T019 [US1] E2E em `web_admin/tests/e2e/frequencia.spec.ts`: mentor lança turma, reabre e confere; Falta + atestado → Justificado; axe sem violações sérias.
+- [x] T009 [P] [US1] Teste de domínio em `backend/tests/unit/test_frequencia_domain.py`: transições PRESENTE↔FALTA, FALTA→JUSTIFICADO ao anexar atestado, atestado proibido em PRESENTE.
+- [x] T010 [P] [US1] Teste de integração em `backend/tests/integration/test_frequencia_api.py`: upsert idempotente por (aluno,data,turno); anexar/baixar/remover atestado; 400 atestado em Presente.
+- [x] T011 [US1] Implementar `backend/app/adapters/persistence/frequencia_repo_impl.py` (upsert por aluno/data/turno, consulta por turma/data/turno, anexar/remover atestado).
+- [x] T012 [US1] Implementar `backend/app/application/frequencia_use_case.py` (lançar lista, atrelar/remover atestado, aplicar transições e regras).
+- [x] T013 [US1] Criar `backend/app/api/schemas/frequencia_schemas.py` (lançamento, item, resposta com status + flag de atestado).
+- [x] T014 [US1] Criar `backend/app/api/v1/router_frequencia.py` com `GET /frequencia`, `POST /frequencia`, `POST/GET/DELETE /frequencia/{id}/atestado`; registrar em `backend/app/main.py`.
+- [x] T015 [P] [US1] Cliente de API em `web_admin/src/services/api.ts`: `getFrequencia`, `lancarFrequencia`, `anexarAtestado`, `removerAtestado`, `baixarAtestado`.
+- [x] T016 [US1] Criar `web_admin/src/pages/admin/FrequenciaPage.tsx`: seletor turma/data/turno, lista de alunos ATIVOS, marcação individual Presente/Falta, anexo de atestado por aluno em Falta, salvar (upsert), estados loading/empty/erro.
+- [x] T017 [US1] Remover a aba Atestados: deletar `web_admin/src/pages/admin/AtestadosPage.tsx`, rota em `web_admin/src/App.tsx` e item "Atestados" em `web_admin/src/components/AdminNavbar.tsx`; adicionar item/rota "Frequência".
+- [x] T018 [US1] Definir o destino do atestado antigo (feature 001): manter `MedicalCertificate`/`CertificateDay` **apenas como histórico somente-leitura** (sem aba, sem novas criações por período); o novo documento de atestado é armazenado em `frequencias.atestado_documento`, **sem consolidar** os dois acervos (decisão explícita — ver A2 da análise). Remover a exposição de `router_certificates` como aba e limpar imports órfãos em `backend/app/main.py` e `web_admin/src`.
+- [x] T019 [US1] E2E em `web_admin/tests/e2e/frequencia.spec.ts`: mentor lança turma, reabre e confere; Falta + atestado → Justificado; axe sem violações sérias.
 
 **Checkpoint (US1 = MVP)**: mentor lança frequência com atestado por turno; aba Atestados removida; testes verdes.
 
@@ -60,12 +60,12 @@ description: "Task list for Frequência lançada por mentores"
 **Goal**: Remover auto-check-in e qualquer autenticação de aluno; só mentores entram.
 **Independent Test**: não há tela/rota de bater ponto; aluno não loga; mentor loga normalmente.
 
-- [ ] T020 [P] [US2] Teste de integração em `backend/tests/integration/test_auth_mentor_only.py`: login de ALUNO → 401/403; login de mentor → 200; rota de check-in inexistente (404).
-- [ ] T021 [US2] Remover autofrequência no backend: deletar `backend/app/api/v1/router_checkin.py` e seu registro em `backend/app/main.py`; remover repos/usos específicos de check-in não reaproveitados.
-- [ ] T022 [US2] Ajustar `backend/app/api/v1/router_auth.py`: remover registro/login de ALUNO; `login` emite token apenas para mentores (STAFF/ADMIN/SUPER_ADMIN).
-- [ ] T023 [US2] Remover testes antigos de auto-check-in em `backend/tests/` que não se aplicam mais (ou convertê-los para asserts de ausência).
-- [ ] T024 [US2] Frontend: deletar `web_admin/src/pages/Checkin.tsx`, remover a rota `/checkin` e a ramificação de aluno em `web_admin/src/App.tsx`; remover do `web_admin/src/pages/Login.tsx` o modo "Criar conta"/registro e qualquer login de aluno.
-- [ ] T025 [P] [US2] Limpar `web_admin/src/services/api.ts`: remover chamadas de check-in e de autorregistro de aluno.
+- [x] T020 [P] [US2] Teste de integração em `backend/tests/integration/test_auth_mentor_only.py`: login de ALUNO → 401/403; login de mentor → 200; rota de check-in inexistente (404).
+- [x] T021 [US2] Remover autofrequência no backend: deletar `backend/app/api/v1/router_checkin.py` e seu registro em `backend/app/main.py`; remover repos/usos específicos de check-in não reaproveitados.
+- [x] T022 [US2] Ajustar `backend/app/api/v1/router_auth.py`: remover registro/login de ALUNO; `login` emite token apenas para mentores (STAFF/ADMIN/SUPER_ADMIN).
+- [x] T023 [US2] Remover testes antigos de auto-check-in em `backend/tests/` que não se aplicam mais (ou convertê-los para asserts de ausência).
+- [x] T024 [US2] Frontend: deletar `web_admin/src/pages/Checkin.tsx`, remover a rota `/checkin` e a ramificação de aluno em `web_admin/src/App.tsx`; remover do `web_admin/src/pages/Login.tsx` o modo "Criar conta"/registro e qualquer login de aluno.
+- [x] T025 [P] [US2] Limpar `web_admin/src/services/api.ts`: remover chamadas de check-in e de autorregistro de aluno.
 
 **Checkpoint (US2)**: zero caminhos de autofrequência/login de aluno; só mentores autenticam.
 

@@ -434,3 +434,36 @@ def expandir_turnos_periodo(
                 resultado.append((atual, turno, ref))
         atual += timedelta(days=1)
     return resultado
+
+
+# ─────────────────────── Frequência lançada por mentores ───────────────────────
+
+
+@dataclass
+class Frequencia:
+    """Lançamento de frequência de um aluno em uma data/turno, feito por um mentor."""
+
+    aluno_id: UUID
+    turma: str
+    data: date
+    turno: str
+    status: str  # StatusFrequencia (PRESENTE | FALTA | JUSTIFICADO)
+    mentor_id: UUID | None = None
+    tem_atestado: bool = False
+    observacao: str | None = None
+
+
+def pode_anexar_atestado(status: str) -> bool:
+    """Atestado só pode ser anexado quando o aluno está Falta/Justificado (nunca Presente)."""
+    from app.domain.enums import StatusFrequencia
+
+    return status in (StatusFrequencia.FALTA.value, StatusFrequencia.JUSTIFICADO.value)
+
+
+def status_com_atestado(tem_atestado: bool, status_base: str) -> str:
+    """Deriva o status final: Falta + atestado => Justificado; sem atestado volta a Falta."""
+    from app.domain.enums import StatusFrequencia
+
+    if status_base == StatusFrequencia.PRESENTE.value:
+        return StatusFrequencia.PRESENTE.value
+    return StatusFrequencia.JUSTIFICADO.value if tem_atestado else StatusFrequencia.FALTA.value

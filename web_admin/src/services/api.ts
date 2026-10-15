@@ -123,6 +123,73 @@ export const updateRole = async (id: string | number, role: string): Promise<voi
   }
 };
 
+// ─────────────────────────── Frequência (lançada pelo mentor) ───────────────────────────
+
+export interface AlunoFrequencia {
+  aluno_id: string;
+  aluno_nome: string;
+  freq_id: string | null;
+  status: string | null; // PRESENTE | FALTA | JUSTIFICADO | null
+  tem_atestado: boolean;
+}
+
+export const getFrequencia = async (
+  turma: string,
+  data: string,
+  turno: string,
+): Promise<AlunoFrequencia[]> => {
+  const params = new URLSearchParams({ turma, data, turno });
+  const res = await fetch(`${API_URL}/frequencia?${params.toString()}`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+  });
+  if (!res.ok) throw new Error(await parseError(res, 'Não foi possível carregar a frequência'));
+  return res.json();
+};
+
+export const lancarFrequencia = async (
+  turma: string,
+  data: string,
+  turno: string,
+  lancamentos: { aluno_id: string; status: string }[],
+): Promise<void> => {
+  const res = await fetch(`${API_URL}/frequencia`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
+    body: JSON.stringify({ turma, data, turno, lancamentos }),
+  });
+  if (!res.ok) throw new Error(await parseError(res, 'Não foi possível salvar a frequência'));
+};
+
+export const anexarAtestadoFrequencia = async (freqId: string, file: File): Promise<void> => {
+  const form = new FormData();
+  form.append('documento', file);
+  const res = await fetch(`${API_URL}/frequencia/${freqId}/atestado`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+    body: form,
+  });
+  if (!res.ok) throw new Error(await parseError(res, 'Não foi possível anexar o atestado'));
+};
+
+export const removerAtestadoFrequencia = async (freqId: string): Promise<void> => {
+  const res = await fetch(`${API_URL}/frequencia/${freqId}/atestado`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+  });
+  if (!res.ok) throw new Error(await parseError(res, 'Não foi possível remover o atestado'));
+};
+
+export const baixarAtestadoFrequencia = async (freqId: string): Promise<void> => {
+  const res = await fetch(`${API_URL}/frequencia/${freqId}/atestado`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+  });
+  if (!res.ok) throw new Error(await parseError(res, 'Não foi possível abrir o atestado'));
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank', 'noopener');
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+};
+
 // ─────────────────────────── Atestados Médicos ───────────────────────────
 
 export interface JustifiedDay {
