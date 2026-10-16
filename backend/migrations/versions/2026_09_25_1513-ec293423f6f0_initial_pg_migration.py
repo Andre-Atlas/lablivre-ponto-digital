@@ -27,7 +27,9 @@ def upgrade() -> None:
         sa.Column("email", sa.String(length=255), nullable=False),
         sa.Column("nome", sa.String(length=255), nullable=False),
         sa.Column(
-            "role", sa.Enum("SUPER_ADMIN", "ADMIN", "VIEWER", name="roleadmin"), nullable=False
+            "role",
+            sa.Enum("SUPER_ADMIN", "ADMIN", "VIEWER", "NONE", name="roleadmin"),
+            nullable=False,
         ),
         sa.Column("oauth_provider", sa.String(length=50), nullable=False),
         sa.Column("oauth_sub", sa.String(length=255), nullable=False),
@@ -130,7 +132,11 @@ def upgrade() -> None:
         sa.Column("ip_publico", sa.String(length=45), nullable=True),
         sa.Column("ssid", sa.String(length=255), nullable=True),
         sa.Column("bssids", sa.JSON(), nullable=True),
-        sa.Column("status", sa.Enum("PRESENTE", "ATRASADO", name="statuscheckin"), nullable=False),
+        sa.Column(
+            "status",
+            sa.Enum("PRESENTE", "ATRASADO", "FALTA", "JUSTIFICADO", name="statuscheckin"),
+            nullable=False,
+        ),
         sa.Column("turno_referencia", sa.String(length=50), nullable=False),
         sa.Column("exportado_sheets", sa.Boolean(), nullable=False),
         sa.Column(
