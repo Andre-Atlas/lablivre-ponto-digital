@@ -12,14 +12,19 @@ from __future__ import annotations
 
 import sqlalchemy as sa
 from alembic import op
+from sqlalchemy.dialects import postgresql
 
 revision = "d4e5f6a7b8c9"
 down_revision = "c3d4e5f6a7b8"
 branch_labels = None
 depends_on = None
 
-status_aluno = sa.Enum("ATIVO", "DESLIGADO", name="statusaluno")
-status_freq = sa.Enum("PRESENTE", "FALTA", "JUSTIFICADO", name="statusfrequencia")
+# create_type=False: os tipos são criados explicitamente (abaixo) de forma idempotente,
+# evitando que o create_table/add_column tente recriá-los ("type already exists").
+status_aluno = postgresql.ENUM("ATIVO", "DESLIGADO", name="statusaluno", create_type=False)
+status_freq = postgresql.ENUM(
+    "PRESENTE", "FALTA", "JUSTIFICADO", name="statusfrequencia", create_type=False
+)
 
 
 def upgrade() -> None:
