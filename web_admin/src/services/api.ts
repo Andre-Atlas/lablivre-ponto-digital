@@ -190,6 +190,17 @@ export const getFrequencia = async (
   return res.json();
 };
 
+/**
+ * Roster de alunos de uma turma, reutilizando o endpoint de frequência (já escopado
+ * por turma e pelo mentor). A data/turno não alteram a lista — são só para obter o roster.
+ */
+export const getAlunosDaTurma = async (
+  turma: string,
+): Promise<{ id: string; nome: string }[]> => {
+  const roster = await getFrequencia(turma, '2000-01-01', 'manha');
+  return roster.map((r) => ({ id: r.aluno_id, nome: r.aluno_nome }));
+};
+
 export const lancarFrequencia = async (
   turma: string,
   data: string,

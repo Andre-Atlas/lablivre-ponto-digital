@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Save, ClipboardList } from 'lucide-react';
 import type { LearningOutcome } from '../../services/api';
-import { getFrequenciaTurmas, getPrefill, getProgramConfig, listLearningOutcomes, submitEvaluation } from '../../services/api';
-import { useAlunos } from '../../hooks/useAlunos';
+import { getAlunosDaTurma, getFrequenciaTurmas, getPrefill, getProgramConfig, listLearningOutcomes, submitEvaluation } from '../../services/api';
 import { PageHeader, Card, Select, Textarea, Button, Alert, EmptyState } from '../../components/ui';
 
 const NIVEIS = [1, 2, 3, 4];
@@ -11,9 +10,9 @@ const NIVEL_LABEL: Record<number, string> = {
 };
 
 export function AvaliarPage() {
-  const { alunos } = useAlunos();
   const [turmas, setTurmas] = useState<string[]>([]);
   const [turma, setTurma] = useState<string>('');
+  const [alunosDaTurma, setAlunosDaTurma] = useState<{ id: string; nome: string }[]>([]);
   const [los, setLos] = useState<LearningOutcome[]>([]);
   const [numSemanas, setNumSemanas] = useState(12);
   const [selected, setSelected] = useState<string>('');
@@ -43,20 +42,23 @@ export function AvaliarPage() {
     })();
   }, []);
 
-  // Students of the selected turma only (no turma → no students).
-  const alunosDaTurma = turma ? alunos.filter((a) => a.turma === turma) : [];
-
-  // Reset the selected student whenever the turma changes, then default to the first.
+  // Load the roster of the selected turma (no turma → empty list).
   useEffect(() => {
     if (!turma) {
+      setAlunosDaTurma([]);
       setSelected('');
       return;
     }
-    const naTurma = alunos.filter((a) => a.turma === turma);
-    if (!naTurma.some((a) => String(a.id) === selected)) {
-      setSelected(naTurma[0] ? String(naTurma[0].id) : '');
-    }
-  }, [turma, alunos, selected]);
+    let active = true;
+    getAlunosDaTurma(turma)
+      .then((roster) => {
+        if (!active) return;
+        setAlunosDaTurma(roster);
+        setSelected(roster[0] ? String(roster[0].id) : '');
+      })
+      .catch((e) => active && setError(e.message || 'Não foi possível carregar os alunos da turma'));
+    return () => { active = false; };
+  }, [turma]);
 
   useEffect(() => {
     if (!selected) return;
