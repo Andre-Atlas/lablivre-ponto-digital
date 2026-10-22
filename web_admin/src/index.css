@@ -1,9 +1,125 @@
+/* ─── Self-hosted brand fonts (no runtime CDN request) ─── */
+@import "@fontsource/poppins/400.css";
+@import "@fontsource/poppins/600.css";
+@import "@fontsource/poppins/700.css";
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+
 @import "tailwindcss";
 
-@custom-variant dark (&:is(.dark *));
-
+/* ─────────────────────────────────────────────────────────────
+   Lab Livre Design System — tokens
+   Single source of truth. See specs/004-lab-livre-design-system.
+   ───────────────────────────────────────────────────────────── */
 @theme {
-  --color-magenta: #D12A6A;
-  --color-cyan: #00B9DE;
-  --color-orange: #F39200;
+  /* Brand */
+  --color-primary: #7023e8;
+  --color-primary-dark: #3d009c;
+  --color-primary-light: #ab7bf6;
+  --color-accent: #f46b2f;
+  --color-accent-dark: #d9531b; /* AA white-text button bg (4.8:1) */
+  --color-accent-darker: #b8440f; /* secondary button hover */
+  --color-accent-pink: #e52e70;
+  --color-ink: #080056;
+
+  /* Semantic */
+  --color-success: #5ab535;
+  --color-success-dark: #3a7620; /* AA text on tinted success surfaces */
+  --color-danger: #b80909;
+  --color-danger-dark: #940707;
+
+  /* Surfaces */
+  --color-bg: #f6f1ff;
+  --color-peach: #ffe7e1;
+  --color-surface: #ffffff;
+
+  /* Neutral ramp */
+  --color-text: #303030;
+  --color-muted: #5e5e5e; /* AA for small secondary text on light surfaces */
+  --color-border: #c6c6c6;
+
+  /* Typography */
+  --font-display: "Poppins", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  /* Radius (brand) */
+  --radius-card: 12px;
+  --radius-pill: 9999px;
+
+  /* Elevation — tinted with brand navy */
+  --shadow-card: 0 4px 12px rgba(8, 0, 86, 0.08);
+  --shadow-pop: 0 12px 32px rgba(8, 0, 86, 0.14);
+
+  /* Motion */
+  --ease-brand: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@layer base {
+  /* LO-evaluation level scale (data-viz): 1→4 = weak→strong */
+  :root {
+    --lo-level-1: var(--color-danger);
+    --lo-level-2: var(--color-accent);
+    --lo-level-3: var(--color-primary-light);
+    --lo-level-4: var(--color-success);
+  }
+
+  html {
+    font-family: var(--font-body);
+    color: var(--color-ink);
+    background-color: var(--color-bg);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+  }
+
+  h1, h2, h3, h4, h5 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--color-ink);
+  }
+
+  /* Always-visible, on-brand focus ring */
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  /* Honor reduced-motion for every decorative/UI transition */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* Big brand hero text (entry surfaces) */
+  .display {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(2.25rem, 5vw, 3.5rem);
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    color: var(--color-primary);
+  }
+
+  /* Uppercase, letter-spaced label above a heading */
+  .eyebrow {
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-ink);
+  }
 }

@@ -1,0 +1,3 @@
+# Cloudflare Pages / Netlify SPA fallback: toda rota cai no index.html
+# (necessário para o react-router com BrowserRouter).
+/*    /index.html   200

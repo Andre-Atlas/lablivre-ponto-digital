@@ -22,6 +22,13 @@ class RoleAdmin(str, Enum):
     NONE = "NONE"
 
 
+class CertificateStatus(str, Enum):
+    """Estado de um atestado médico."""
+
+    ACTIVE = "ACTIVE"
+    REVOKED = "REVOKED"
+
+
 class DiaSemana(str, Enum):
     SEG = "SEG"
     TER = "TER"
@@ -33,3 +40,18 @@ class DiaSemana(str, Enum):
 class Turno(str, Enum):
     MANHA = "MANHA"
     TARDE = "TARDE"
+
+
+class StatusAluno(str, Enum):
+    """Situação do aluno no programa."""
+
+    ATIVO = "ATIVO"
+    DESLIGADO = "DESLIGADO"
+
+
+class StatusFrequencia(str, Enum):
+    """Estado de um lançamento de frequência feito pelo mentor."""
+
+    PRESENTE = "PRESENTE"
+    FALTA = "FALTA"
+    JUSTIFICADO = "JUSTIFICADO"

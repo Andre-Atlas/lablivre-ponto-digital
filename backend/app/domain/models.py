@@ -7,10 +7,17 @@ Inclui funções de negócio para identificação de turnos e cálculo de status
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime, time
+from datetime import date, datetime, time, timedelta
 from uuid import UUID
 
-from .enums import DiaSemana, RoleAdmin, StatusCheckin, TipoUsuario, Turno
+from .enums import (
+    CertificateStatus,
+    DiaSemana,
+    RoleAdmin,
+    StatusCheckin,
+    TipoUsuario,
+    Turno,
+)
 
 # ──────────────────────────────────────────────
 # Entidades de Domínio
@@ -79,6 +86,45 @@ class CheckInDuplicata:
     motivo: str
     criado_em: datetime
     ip_publico: str | None = None
+
+
+@dataclass
+class MedicalCertificate:
+    """Atestado médico registrado por um admin para um aluno.
+
+    Um atestado cobre um período contíguo e justifica (via CertificateDay) os turnos
+    esperados nesse período em que o aluno não possui check-in presente/atrasado real.
+    """
+
+    id: UUID
+    user_id: UUID
+    periodo_inicio: date
+    periodo_fim: date
+    documento: bytes
+    documento_filename: str
+    documento_content_type: str
+    documento_tamanho: int
+    status: CertificateStatus
+    criado_em: datetime
+    observacao: str | None = None
+    registrado_por: UUID | None = None
+    revogado_por: UUID | None = None
+    motivo_revogacao: str | None = None
+    revogado_em: datetime | None = None
+
+
+@dataclass
+class CertificateDay:
+    """Vínculo persistente entre um atestado e um turno justificado do aluno."""
+
+    id: UUID
+    certificate_id: UUID
+    user_id: UUID
+    data: date
+    turno: str
+    turno_referencia: str
+    ativo: bool
+    criado_em: datetime
 
 
 @dataclass
@@ -212,3 +258,212 @@ def calcular_status(
     if minutos_atraso <= carencia_minutos:
         return StatusCheckin.PRESENTE
     return StatusCheckin.ATRASADO
+
+
+# ──────────────────────────────────────────────
+# Avaliação Semanal de Learning Outcomes (LOs)
+# ──────────────────────────────────────────────
+
+NIVEL_MIN = 1
+NIVEL_MAX = 4
+NUM_SEMANAS_PADRAO = 12
+
+# Chaves usadas na tabela `config` para a configuração do programa de avaliação.
+CFG_DATA_INICIO = "lo_eval_data_inicio"
+CFG_NUM_SEMANAS = "lo_eval_num_semanas"
+
+
+@dataclass
+class LearningOutcome:
+    """Objetivo de aprendizagem (LO) do catálogo."""
+
+    id: UUID
+    numero: int
+    nome: str
+    ativo: bool
+    ordem: int
+    criado_em: datetime
+    atualizado_em: datetime
+    descricao: str | None = None
+
+
+@dataclass
+class EvaluationLevel:
+    """Nível (1–4) atribuído a um LO dentro de uma avaliação semanal."""
+
+    id: UUID
+    evaluation_id: UUID
+    lo_id: UUID
+    nivel: int
+    atualizado_em: datetime
+    mentor_id: UUID | None = None
+
+
+@dataclass
+class EvaluationComment:
+    """Comentário de um mentor em uma avaliação semanal."""
+
+    id: UUID
+    evaluation_id: UUID
+    mentor_nome: str
+    texto: str
+    atualizado_em: datetime
+    mentor_id: UUID | None = None
+
+
+@dataclass
+class WeeklyEvaluation:
+    """Avaliação de um aluno em uma semana do programa (níveis por LO + comentários)."""
+
+    id: UUID
+    user_id: UUID
+    semana: int
+    turma: str
+    criado_em: datetime
+    atualizado_em: datetime
+    niveis: list[EvaluationLevel] = field(default_factory=list)
+    comentarios: list[EvaluationComment] = field(default_factory=list)
+
+
+# ──────────────────────────────────────────────
+# Funções de Negócio — Avaliação de LOs
+# ──────────────────────────────────────────────
+
+
+def nivel_valido(nivel: int) -> bool:
+    """Valida que o nível está no intervalo permitido (1–4)."""
+    return NIVEL_MIN <= nivel <= NIVEL_MAX
+
+
+def semana_de(data_ref: date, data_inicio: date) -> int:
+    """Índice de semana (≥ 1) de uma data em relação ao início do programa (semana 1)."""
+    return ((data_ref - data_inicio).days // 7) + 1
+
+
+def semana_atual(hoje: date, data_inicio: date, num_semanas: int) -> int:
+    """Semana corrente, limitada ao intervalo [1, num_semanas]."""
+    s = semana_de(hoje, data_inicio)
+    if s < 1:
+        return 1
+    if s > num_semanas:
+        return num_semanas
+    return s
+
+
+def semana_no_intervalo(semana: int, num_semanas: int) -> bool:
+    """Valida que a semana está dentro do programa (1..num_semanas)."""
+    return 1 <= semana <= num_semanas
+
+
+def niveis_anteriores(rows: list[tuple[int, UUID, int]], antes_de_semana: int) -> dict[UUID, int]:
+    """Último nível conhecido por LO antes de uma semana.
+
+    Args:
+        rows: tuplas (semana, lo_id, nivel) do aluno (qualquer semana).
+        antes_de_semana: considera apenas semanas estritamente menores que esta.
+
+    Returns:
+        Mapa lo_id -> nível da semana mais recente (< antes_de_semana) que possui aquele LO.
+    """
+    melhor_semana: dict[UUID, int] = {}
+    resultado: dict[UUID, int] = {}
+    for semana, lo_id, nivel in rows:
+        if semana >= antes_de_semana:
+            continue
+        if lo_id not in melhor_semana or semana > melhor_semana[lo_id]:
+            melhor_semana[lo_id] = semana
+            resultado[lo_id] = nivel
+    return resultado
+
+
+def detectar_regressoes(
+    niveis_atuais: dict[UUID, int], niveis_anteriores_por_lo: dict[UUID, int]
+) -> list[tuple[UUID, int, int]]:
+    """Detecta regressões: LO cujo nível atual é estritamente menor que o anterior comparável.
+
+    Returns:
+        Lista de (lo_id, nivel_atual, nivel_anterior) somente quando existe nível anterior
+        comparável e o atual é menor.
+    """
+    regressoes: list[tuple[UUID, int, int]] = []
+    for lo_id, atual in niveis_atuais.items():
+        anterior = niveis_anteriores_por_lo.get(lo_id)
+        if anterior is not None and atual < anterior:
+            regressoes.append((lo_id, atual, anterior))
+    return regressoes
+
+
+# ──────────────────────────────────────────────
+# Atestados Médicos — Cobertura de Turnos
+# ──────────────────────────────────────────────
+
+
+def periodo_valido(periodo_inicio: date, periodo_fim: date) -> bool:
+    """Valida que o período do atestado é coerente (fim não anterior ao início)."""
+    return periodo_fim >= periodo_inicio
+
+
+def expandir_turnos_periodo(
+    turma_ou_equipe: str, periodo_inicio: date, periodo_fim: date
+) -> list[tuple[date, Turno, str]]:
+    """Expande um período de atestado nos turnos esperados da turma.
+
+    Para cada dia útil no intervalo ``[periodo_inicio, periodo_fim]`` (inclusivo), retorna
+    os turnos esperados da turma naquele dia, cada um como uma tupla
+    ``(data, turno, turno_referencia)`` onde ``turno_referencia`` é a chave
+    ``"{YYYY-MM-DD}_{MANHA|TARDE}"`` usada pela exportação de frequência.
+
+    Dias sem turno esperado (fim de semana, dias sem aula para a turma) não geram tuplas.
+    Esta é uma função pura de domínio: NÃO filtra por presença de check-in — esse filtro
+    acontece no caso de uso, que tem acesso ao banco.
+    """
+    if not periodo_valido(periodo_inicio, periodo_fim):
+        return []
+
+    resultado: list[tuple[date, Turno, str]] = []
+    atual = periodo_inicio
+    while atual <= periodo_fim:
+        dia = _DIA_SEMANA_MAP.get(atual.weekday())
+        if dia is not None:
+            turnos = sorted(
+                {c.turno for c in TURNOS_ALUNOS if c.turma == turma_ou_equipe and c.dia == dia},
+                key=lambda t: t.value,
+            )
+            for turno in turnos:
+                ref = f"{atual.isoformat()}_{turno.value}"
+                resultado.append((atual, turno, ref))
+        atual += timedelta(days=1)
+    return resultado
+
+
+# ─────────────────────── Frequência lançada por mentores ───────────────────────
+
+
+@dataclass
+class Frequencia:
+    """Lançamento de frequência de um aluno em uma data/turno, feito por um mentor."""
+
+    aluno_id: UUID
+    turma: str
+    data: date
+    turno: str
+    status: str  # StatusFrequencia (PRESENTE | FALTA | JUSTIFICADO)
+    mentor_id: UUID | None = None
+    tem_atestado: bool = False
+    observacao: str | None = None
+
+
+def pode_anexar_atestado(status: str) -> bool:
+    """Atestado só pode ser anexado quando o aluno está Falta/Justificado (nunca Presente)."""
+    from app.domain.enums import StatusFrequencia
+
+    return status in (StatusFrequencia.FALTA.value, StatusFrequencia.JUSTIFICADO.value)
+
+
+def status_com_atestado(tem_atestado: bool, status_base: str) -> str:
+    """Deriva o status final: Falta + atestado => Justificado; sem atestado volta a Falta."""
+    from app.domain.enums import StatusFrequencia
+
+    if status_base == StatusFrequencia.PRESENTE.value:
+        return StatusFrequencia.PRESENTE.value
+    return StatusFrequencia.JUSTIFICADO.value if tem_atestado else StatusFrequencia.FALTA.value

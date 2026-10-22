@@ -1,7 +1,42 @@
 # Changelog
 
 ## [Unreleased]
+### Changed
+- **Frequência lançada por mentores** (substitui a autofrequência do aluno):
+  - A presença passa a ser **lançada pelos mentores** por turma/data/turno (Presente/Falta), marcando cada aluno individualmente. Novo agregado `Frequencia` (upsert idempotente por aluno/data/turno) é a fonte de verdade — não há mais cálculo a partir de check-in do aluno.
+  - **Atestados atrelados no lançamento**: ao marcar Falta, o mentor anexa um atestado àquele turno (Falta → Justificado). A **aba/tela de Atestados deixou de existir**; o documento vai em `frequencias`. O modelo antigo de atestado por período (feature 001) permanece apenas como histórico.
+  - **Vínculo mentor↔turma (N–N)** com RBAC: o mentor só lança/visualiza frequência e avaliações das suas turmas; administradores veem todas. Endpoints `GET/PUT /api/v1/admin/mentores/{id}/turmas`.
+  - **Status do aluno (Ativo/Desligado)**: alunos Desligados saem das listas ativas (frequência, avaliação, dashboards) mas permanecem no histórico e nas exportações (marcados). Endpoint `PUT /api/v1/admin/alunos/{id}/status`; `GET /api/v1/admin/usuarios?status=`.
+  - **Exportações**: novo relatório de frequência (`GET /api/v1/admin/export/frequencia`); a exportação de usuários passa a incluir a coluna Status.
+  - Novos endpoints de frequência: `GET/POST /api/v1/frequencia`, `GET /api/v1/frequencia/turmas`, `POST/GET/DELETE /api/v1/frequencia/{id}/atestado`.
+
+### Removed
+- **Autofrequência e login de aluno**: removidos o fluxo de "bater ponto" (`router_checkin`, tela de check-in, captura de localização) e qualquer autenticação de aluno. O `POST /api/v1/auth/login` passa a aceitar **somente mentores** (STAFF/ADMIN); `POST /auth/register` e `POST /auth/onboarding` foram removidos. O cliente desktop de autofrequência fica **aposentado**. Migração destrutiva descarta os `checkins` antigos (atestados e avaliações são preservados).
+
+### Changed
+- **Design System Lab Livre (web_admin)**: Toda a interface do painel web foi padronizada em um design system único derivado da identidade visual oficial do Lab Livre ("Design V3").
+  - **Tokens** centralizados em `web_admin/src/index.css` (`@theme` do Tailwind v4): paleta (roxo `#7023E8`, laranja, navy `#080056`, lavanda, pêssego, verde/vermelho semânticos), tipografia (Poppins para títulos + Inter para corpo, **auto-hospedadas**, sem requisições a CDN externo), raios, elevação e motion. Nenhuma cor fixa (hex) permanece na marcação das telas.
+  - **Biblioteca de componentes** reutilizável em `web_admin/src/components/ui/` (Button, Card, Input, Select, Textarea, Badge, Table, Modal, Tabs, Alert/Toast, PageHeader, StatCallout, Blob, EmptyState) com estados completos (hover, foco visível, desabilitado, erro, carregando, vazio), semântica ARIA e navegação por teclado.
+  - **Todas as telas** (Login, Check-in, Dashboard e os painéis de Atestados, Avaliações, Catálogo e Dashboard de LOs) foram reconstruídas sobre o design system, preservando todo o comportamento e os fluxos de dados existentes. Branding expressivo (blobs, hero) nas telas de entrada; visual sóbrio nas telas densas de dados.
+  - **Acessibilidade**: contraste WCAG AA verificado (axe) sem violações sérias nas telas principais; responsivo de ~375px ao desktop; `prefers-reduced-motion` respeitado.
+  - Página de _styleguide_ de desenvolvimento em `/styleguide`.
+
+### Removed
+- **Tema escuro (dark mode)** do painel web: a plataforma passa a ter um único tema claro, alinhado à identidade de marca. Removidos o `ThemeToggle`, o estado de tema e todas as variantes `dark:`.
+
 ### Added
+- **Avaliação Semanal de Learning Outcomes (LOs)**: Mentores (STAFF/ADMIN) avaliam cada aluno (`ALUNO`) por semana, atribuindo um nível de 1 a 4 por objetivo de aprendizagem, com comentários; o formulário pré-preenche os últimos níveis conhecidos do aluno.
+  - **Catálogo de LOs** gerenciável por administradores (criar, editar, desativar — histórico preservado).
+  - **Dashboard** por turma/semana: avaliados vs pendentes, contagem por mentor, heatmap de níveis por LO e regressões em relação à semana anterior.
+  - **Relatório semanal** exportável (CSV/Excel) com o nível de cada aluno por LO e os comentários.
+  - Mentor restrito à própria turma; dados de avaliação visíveis apenas a mentores/administradores. Co-avaliação: o último nível prevalece por LO e os comentários de cada mentor são mantidos.
+  - Novos endpoints: `GET/POST /api/v1/admin/los`, `PUT /api/v1/admin/los/{id}`, `GET /api/v1/admin/avaliacoes/config`, `GET /api/v1/admin/avaliacoes/prefill`, `GET/POST /api/v1/admin/avaliacoes`, `GET /api/v1/admin/avaliacoes/dashboard`, `GET /api/v1/admin/avaliacoes/export`.
+- **Atestados Médicos**: Administradores podem registrar atestados médicos (documento + período contíguo) para alunos (`ALUNO`). Ao salvar, todos os turnos esperados do período sem check-in presente/atrasado real (FALTA ou já JUSTIFICADO) são marcados como justificados e **vinculados** ao atestado.
+  - Vínculo persistente dia↔atestado (tabela `certificate_days`), rastreável nos dois sentidos e exibido no painel.
+  - Documento armazenado no PostgreSQL (BYTEA, até 10 MB) e acessível apenas a administradores.
+  - As exportações **CSV e Excel** passam a refletir os turnos justificados por atestado (o CSV foi reformulado para enumerar os turnos esperados do aluno, como o Excel).
+  - Revogação de atestado reverte os turnos justificados exclusivamente por ele.
+  - Novos endpoints: `POST/GET /api/v1/admin/certificados`, `GET /api/v1/admin/certificados/{id}`, `GET .../{id}/documento`, `POST .../{id}/revogar`.
 - **Sistema de Permissões**: Adicionado modelo robusto com as roles `SUPER_ADMIN`, `ADMIN`, `STAFF` e `ALUNO`.
 - **Desktop App (Python/Flet)**:
   - Adicionado suporte a inicialização automática com o sistema (Auto-startup).

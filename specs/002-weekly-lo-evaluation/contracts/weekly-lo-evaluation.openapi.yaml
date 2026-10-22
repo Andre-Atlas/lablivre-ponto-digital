@@ -1,0 +1,280 @@
+openapi: 3.1.0
+info:
+  title: Ponto Digital — Weekly LO Evaluation API
+  version: 1.0.0
+  description: >
+    Staff-only endpoints for the weekly learning-outcome evaluation feature. Mounted under
+    /api/v1. All endpoints require a Bearer JWT. LO catalog management requires an ADMIN/
+    SUPER_ADMIN (require_admin); evaluation, pre-fill, dashboard and report require a mentor
+    (require_mentor = STAFF or ADMIN/SUPER_ADMIN). Recording an evaluation additionally requires
+    the mentor's turma to match the student's. Students (ALUNO) have no access.
+
+servers:
+  - url: /api/v1
+
+security:
+  - bearerAuth: []
+
+paths:
+  /admin/los:
+    get:
+      operationId: listLearningOutcomes
+      summary: List learning outcomes (active by default)
+      parameters:
+        - { in: query, name: incluir_inativos, schema: { type: boolean, default: false } }
+      responses:
+        "200":
+          description: Learning outcomes ordered by `ordem`.
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/LearningOutcome" } }
+        "401": { description: Missing/invalid token. }
+        "403": { description: Not a mentor/admin. }
+    post:
+      operationId: createLearningOutcome
+      summary: Create a learning outcome (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LearningOutcomeInput" }
+      responses:
+        "201": { description: Created., content: { application/json: { schema: { $ref: "#/components/schemas/LearningOutcome" } } } }
+        "400": { description: Validation error (missing name, numero < 1, duplicate numero). }
+        "403": { description: Not an administrator. }
+
+  /admin/los/{lo_id}:
+    put:
+      operationId: updateLearningOutcome
+      summary: Edit or deactivate a learning outcome (admin only)
+      parameters:
+        - { in: path, name: lo_id, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LearningOutcomeUpdate" }
+      responses:
+        "200": { description: Updated., content: { application/json: { schema: { $ref: "#/components/schemas/LearningOutcome" } } } }
+        "400": { description: Validation error. }
+        "403": { description: Not an administrator. }
+        "404": { description: Not found. }
+
+  /admin/avaliacoes/config:
+    get:
+      operationId: getProgramConfig
+      summary: Get program start date, number of weeks, and current week
+      responses:
+        "200":
+          description: Program configuration.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProgramConfig" }
+        "403": { description: Not a mentor/admin. }
+
+  /admin/avaliacoes/prefill:
+    get:
+      operationId: getPrefill
+      summary: Last known level per LO for a student before a week (form pre-fill)
+      parameters:
+        - { in: query, name: user_id, required: true, schema: { type: string, format: uuid } }
+        - { in: query, name: semana, required: true, schema: { type: integer, minimum: 1 } }
+      responses:
+        "200":
+          description: Map of lo_id → last known level (absent LO = never assessed).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Prefill" }
+        "403": { description: Not a mentor for this student's turma. }
+        "404": { description: Student not found. }
+
+  /admin/avaliacoes:
+    get:
+      operationId: getEvaluation
+      summary: Get a student's saved evaluation for a week (levels + comments)
+      parameters:
+        - { in: query, name: user_id, required: true, schema: { type: string, format: uuid } }
+        - { in: query, name: semana, required: true, schema: { type: integer, minimum: 1 } }
+      responses:
+        "200":
+          description: The evaluation (empty levels/comments if not yet evaluated).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Evaluation" }
+        "403": { description: Not a mentor for this student's turma. }
+    post:
+      operationId: submitEvaluation
+      summary: Record/update a student's weekly evaluation (upsert; last level wins)
+      description: >
+        Upserts the student's evaluation for the week: each submitted LO level is set (last write
+        wins, attributed to the caller), and the caller's comment replaces only their own comment.
+        Requires the caller's turma to match the student's and the week to be within program range.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EvaluationInput" }
+      responses:
+        "200": { description: Saved., content: { application/json: { schema: { $ref: "#/components/schemas/Evaluation" } } } }
+        "400": { description: Validation error (level out of 1–4, inactive/unknown LO, week out of range). }
+        "403": { description: Caller not a mentor for the student's turma. }
+        "404": { description: Student not found. }
+
+  /admin/avaliacoes/dashboard:
+    get:
+      operationId: getDashboard
+      summary: Per-turma/week dashboard (assessed/pending, per-mentor, heatmap, regressions)
+      parameters:
+        - { in: query, name: turma, required: true, schema: { type: string } }
+        - { in: query, name: semana, required: true, schema: { type: integer, minimum: 1 } }
+      responses:
+        "200":
+          description: Dashboard model.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Dashboard" }
+        "403": { description: Not a mentor/admin. }
+
+  /admin/avaliacoes/export:
+    get:
+      operationId: exportWeeklyReport
+      summary: Export per-student levels + comments for a turma/week (CSV or Excel)
+      parameters:
+        - { in: query, name: turma, required: true, schema: { type: string } }
+        - { in: query, name: semana, required: true, schema: { type: integer, minimum: 1 } }
+        - { in: query, name: format, schema: { type: string, enum: [csv, excel], default: csv } }
+      responses:
+        "200":
+          description: Spreadsheet stream; pending students rowed without levels.
+          content:
+            text/csv: { schema: { type: string } }
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet: { schema: { type: string, format: binary } }
+        "403": { description: Not a mentor/admin. }
+
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+
+  schemas:
+    LearningOutcome:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        numero: { type: integer }
+        nome: { type: string }
+        descricao: { type: string, nullable: true }
+        ativo: { type: boolean }
+        ordem: { type: integer }
+
+    LearningOutcomeInput:
+      type: object
+      required: [numero, nome]
+      properties:
+        numero: { type: integer, minimum: 1 }
+        nome: { type: string }
+        descricao: { type: string, nullable: true }
+        ordem: { type: integer, nullable: true }
+
+    LearningOutcomeUpdate:
+      type: object
+      properties:
+        nome: { type: string }
+        descricao: { type: string, nullable: true }
+        ativo: { type: boolean }
+        ordem: { type: integer }
+
+    ProgramConfig:
+      type: object
+      properties:
+        data_inicio: { type: string, format: date }
+        num_semanas: { type: integer }
+        semana_atual: { type: integer }
+
+    Prefill:
+      type: object
+      properties:
+        semana: { type: integer }
+        niveis:
+          type: object
+          additionalProperties: { type: integer, minimum: 1, maximum: 4 }
+          description: lo_id (uuid string) → last known level.
+
+    EvaluationInput:
+      type: object
+      required: [user_id, semana, niveis]
+      properties:
+        user_id: { type: string, format: uuid }
+        semana: { type: integer, minimum: 1 }
+        niveis:
+          type: object
+          additionalProperties: { type: integer, minimum: 1, maximum: 4 }
+          description: lo_id → level (1–4). Only the LOs being assessed need be present.
+        comentario: { type: string, nullable: true }
+
+    EvaluationLevel:
+      type: object
+      properties:
+        lo_id: { type: string, format: uuid }
+        numero: { type: integer }
+        nome: { type: string }
+        nivel: { type: integer, minimum: 1, maximum: 4 }
+        mentor_id: { type: string, format: uuid, nullable: true }
+
+    EvaluationComment:
+      type: object
+      properties:
+        mentor_id: { type: string, format: uuid, nullable: true }
+        mentor_nome: { type: string }
+        texto: { type: string }
+
+    Evaluation:
+      type: object
+      properties:
+        user_id: { type: string, format: uuid }
+        user_nome: { type: string }
+        semana: { type: integer }
+        turma: { type: string }
+        niveis: { type: array, items: { $ref: "#/components/schemas/EvaluationLevel" } }
+        comentarios: { type: array, items: { $ref: "#/components/schemas/EvaluationComment" } }
+
+    PendingStudent:
+      type: object
+      properties:
+        user_id: { type: string, format: uuid }
+        nome: { type: string }
+
+    MentorCount:
+      type: object
+      properties:
+        mentor_nome: { type: string }
+        alunos_avaliados: { type: integer }
+
+    HeatmapRow:
+      type: object
+      properties:
+        lo_id: { type: string, format: uuid }
+        numero: { type: integer }
+        nome: { type: string }
+        contagem: { type: array, items: { type: integer }, description: "[count nível1, nível2, nível3, nível4]" }
+
+    Regression:
+      type: object
+      properties:
+        user_id: { type: string, format: uuid }
+        nome: { type: string }
+        lo_id: { type: string, format: uuid }
+        numero: { type: integer }
+        nivel_atual: { type: integer }
+        nivel_anterior: { type: integer }
+
+    Dashboard:
+      type: object
+      properties:
+        turma: { type: string }
+        semana: { type: integer }
+        total_alunos: { type: integer }
+        avaliados: { type: integer }
+        pendentes: { type: array, items: { $ref: "#/components/schemas/PendingStudent" } }
+        por_mentor: { type: array, items: { $ref: "#/components/schemas/MentorCount" } }
+        heatmap: { type: array, items: { $ref: "#/components/schemas/HeatmapRow" } }
+        regressoes: { type: array, items: { $ref: "#/components/schemas/Regression" } }

@@ -3,6 +3,7 @@ from __future__ import annotations
 import calendar
 import csv
 import io
+import json
 import uuid
 from datetime import UTC, datetime, timedelta, timezone
 from typing import Any
@@ -17,10 +18,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.adapters.persistence.database import get_db
 from app.adapters.persistence.orm_models import Checkin as CheckInModel
+from app.adapters.persistence.orm_models import Config as ConfigModel
 from app.adapters.persistence.orm_models import Device as DeviceModel
+from app.adapters.persistence.orm_models import Frequencia as FrequenciaModel
+from app.adapters.persistence.orm_models import MentorTurma as MentorTurmaModel
 from app.adapters.persistence.orm_models import User as UserModel
 from app.api.middleware.auth_dependencies import get_current_user
-from app.domain.enums import RoleAdmin, StatusCheckin, TipoUsuario
+from app.domain.enums import (
+    CertificateStatus,
+    RoleAdmin,
+    StatusAluno,
+    StatusCheckin,
+    TipoUsuario,
+)
 from app.domain.models import User
 from app.utils.security import get_password_hash
 
@@ -35,6 +45,7 @@ class UserAdminResponse(BaseModel):
     tipo: TipoUsuario
     role: RoleAdmin | None = None
     admin_aprovado: bool
+    status: StatusAluno = StatusAluno.ATIVO
 
 
 async def require_admin(
@@ -61,11 +72,15 @@ async def require_admin(
 
 @router.get("/usuarios", response_model=list[UserAdminResponse])
 async def list_usuarios(
-    db: AsyncSession = Depends(get_db), admin: User = Depends(require_admin)
+    status: str | None = None,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(require_admin),
 ) -> Any:
-    result = await db.execute(select(UserModel))
-    users = result.scalars().all()
-    return users  # Let FastAPI serialize it. We just need from_attributes=True in schema.
+    stmt = select(UserModel)
+    if status:
+        stmt = stmt.where(UserModel.status == status)
+    users = (await db.execute(stmt)).scalars().all()
+    return users  # from_attributes=True no schema cuida da serialização.
 
 
 @router.post("/usuarios/{user_id}/aprovar")
@@ -117,6 +132,193 @@ async def create_admin(
     return {"message": f"Administrador {new_admin.nome} criado com sucesso."}
 
 
+# ─────────────────────────── Turmas (cadastro) ───────────────────────────
+
+TURMAS_CONFIG_KEY = "turmas"
+
+
+async def _get_turmas(db: AsyncSession) -> list[str]:
+    """Lista de turmas cadastradas (armazenadas como JSON na tabela config)."""
+    res = await db.execute(select(ConfigModel).where(ConfigModel.chave == TURMAS_CONFIG_KEY))
+    row = res.scalars().first()
+    if not row or not row.valor:
+        return []
+    try:
+        data = json.loads(row.valor)
+    except (ValueError, TypeError):
+        return []
+    return [str(t) for t in data] if isinstance(data, list) else []
+
+
+async def _set_turmas(db: AsyncSession, turmas: list[str]) -> None:
+    res = await db.execute(select(ConfigModel).where(ConfigModel.chave == TURMAS_CONFIG_KEY))
+    row = res.scalars().first()
+    now = datetime.now(UTC)
+    valor = json.dumps(turmas, ensure_ascii=False)
+    if row:
+        row.valor = valor
+        row.atualizado_em = now
+    else:
+        db.add(ConfigModel(chave=TURMAS_CONFIG_KEY, valor=valor, atualizado_em=now))
+    await db.commit()
+
+
+@router.get("/turmas")
+async def list_turmas(
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(require_admin),
+) -> list[str]:
+    return sorted(await _get_turmas(db))
+
+
+class TurmaRequest(BaseModel):
+    nome: str
+
+
+@router.post("/turmas", status_code=201)
+async def create_turma(
+    request: TurmaRequest,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(require_admin),
+) -> list[str]:
+    nome = request.nome.strip()
+    if not nome:
+        raise HTTPException(status_code=400, detail="Nome da turma é obrigatório.")
+    turmas = await _get_turmas(db)
+    if any(t.lower() == nome.lower() for t in turmas):
+        raise HTTPException(status_code=409, detail="Turma já cadastrada.")
+    turmas.append(nome)
+    await _set_turmas(db, turmas)
+    return sorted(turmas)
+
+
+@router.delete("/turmas/{nome}")
+async def delete_turma(
+    nome: str,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(require_admin),
+) -> list[str]:
+    turmas = await _get_turmas(db)
+    novas = [t for t in turmas if t.lower() != nome.strip().lower()]
+    if len(novas) == len(turmas):
+        raise HTTPException(status_code=404, detail="Turma não encontrada.")
+    await _set_turmas(db, novas)
+    return sorted(novas)
+
+
+# ─────────────────────────── Vínculo mentor–turma ───────────────────────────
+
+
+class MentorTurmasRequest(BaseModel):
+    turmas: list[str]
+
+
+@router.get("/mentores/{user_id}/turmas", response_model=list[str])
+async def get_mentor_turmas(
+    user_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(require_admin),
+) -> Any:
+    rows = await db.execute(
+        select(MentorTurmaModel.turma).where(MentorTurmaModel.user_id == user_id)
+    )
+    return sorted(r[0] for r in rows.all())
+
+
+@router.put("/mentores/{user_id}/turmas", response_model=list[str])
+async def set_mentor_turmas(
+    user_id: UUID,
+    request: MentorTurmasRequest,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(require_admin),
+) -> Any:
+    mentor = (await db.execute(select(UserModel).where(UserModel.id == user_id))).scalars().first()
+    if not mentor:
+        raise HTTPException(status_code=404, detail="Mentor não encontrado.")
+    if mentor.tipo != TipoUsuario.STAFF and mentor.role not in (RoleAdmin.ADMIN, RoleAdmin.SUPER_ADMIN):
+        raise HTTPException(status_code=400, detail="Só mentores (staff/admin) podem ser atrelados a turmas.")
+
+    cadastradas = set(await _get_turmas(db))
+    novas = {t.strip() for t in request.turmas if t.strip()}
+    invalidas = novas - cadastradas
+    if invalidas:
+        raise HTTPException(
+            status_code=400, detail=f"Turma(s) não cadastrada(s): {', '.join(sorted(invalidas))}"
+        )
+
+    await db.execute(MentorTurmaModel.__table__.delete().where(MentorTurmaModel.user_id == user_id))
+    now = datetime.now(UTC)
+    for t in sorted(novas):
+        db.add(MentorTurmaModel(id=uuid.uuid4(), user_id=user_id, turma=t, criado_em=now))
+    await db.commit()
+    return sorted(novas)
+
+
+class CreateAlunoRequest(BaseModel):
+    nome: str
+    email: str
+    turma_ou_equipe: str
+
+
+@router.post("/alunos", status_code=201)
+async def create_aluno(
+    request: CreateAlunoRequest,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(require_admin),
+) -> dict[str, Any]:
+    """Registra um aluno (ALUNO) como registro administrado — sem senha/login próprio."""
+    if not request.nome.strip() or not request.email.strip():
+        raise HTTPException(status_code=400, detail="Nome e e-mail são obrigatórios.")
+    if not request.turma_ou_equipe.strip():
+        raise HTTPException(status_code=400, detail="Turma é obrigatória.")
+    turmas = await _get_turmas(db)
+    if request.turma_ou_equipe.strip() not in turmas:
+        raise HTTPException(
+            status_code=400, detail="Turma não cadastrada. Cadastre a turma antes de registrar o aluno."
+        )
+    existing = await db.execute(select(UserModel).where(UserModel.email == request.email))
+    if existing.scalars().first():
+        raise HTTPException(status_code=409, detail="E-mail já cadastrado.")
+
+    aluno = UserModel(
+        email=request.email,
+        nome=request.nome.strip(),
+        tipo=TipoUsuario.ALUNO,
+        role=RoleAdmin.NONE,
+        turma_ou_equipe=request.turma_ou_equipe.strip(),
+        oauth_provider="manual",
+        oauth_sub=f"manual_{uuid.uuid4()}",
+        admin_aprovado=True,
+    )
+    db.add(aluno)
+    await db.commit()
+    await db.refresh(aluno)
+    return {"id": str(aluno.id), "nome": aluno.nome, "tipo": aluno.tipo.value}
+
+
+class StatusAlunoRequest(BaseModel):
+    status: str
+
+
+@router.put("/alunos/{user_id}/status", response_model=UserAdminResponse)
+async def set_aluno_status(
+    user_id: UUID,
+    request: StatusAlunoRequest,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(require_admin),
+) -> Any:
+    aluno = (await db.execute(select(UserModel).where(UserModel.id == user_id))).scalars().first()
+    if not aluno:
+        raise HTTPException(status_code=404, detail="Aluno não encontrado.")
+    try:
+        aluno.status = StatusAluno(request.status)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Status inválido (use ATIVO ou DESLIGADO).") from None
+    await db.commit()
+    await db.refresh(aluno)
+    return aluno
+
+
 @router.delete("/usuarios/{user_id}")
 async def delete_usuario(
     user_id: UUID, db: AsyncSession = Depends(get_db), admin: User = Depends(require_admin)
@@ -144,7 +346,7 @@ async def export_usuarios(
 
     output_csv = io.StringIO()
     writer = csv.writer(output_csv)
-    writer.writerow(["ID", "Nome", "Email", "Tipo", "Aprovado", "Turma", "Máquina", "Criado Em"])
+    writer.writerow(["ID", "Nome", "Email", "Tipo", "Status", "Aprovado", "Turma", "Máquina", "Criado Em"])
 
     for u in users:
         writer.writerow(
@@ -153,6 +355,7 @@ async def export_usuarios(
                 u.nome,
                 u.email,
                 u.tipo.value if u.tipo else "",
+                u.status.value if u.status else "",
                 "Sim" if u.admin_aprovado else "Nao",
                 u.turma_ou_equipe or "",
                 u.patrimonio or "",
@@ -169,6 +372,45 @@ async def export_usuarios(
         iter([output_csv.getvalue()]),
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=usuarios_lablivre.csv"},
+    )
+
+
+@router.get("/export/frequencia")
+async def export_frequencia(
+    turma: str | None = None,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(require_admin),
+) -> Any:
+    """Relatório de frequência lançada pelos mentores (inclui alunos Desligados, marcados)."""
+    stmt = (
+        select(FrequenciaModel, UserModel)
+        .join(UserModel, FrequenciaModel.aluno_id == UserModel.id)
+        .order_by(FrequenciaModel.data, FrequenciaModel.turma, UserModel.nome)
+    )
+    if turma:
+        stmt = stmt.where(FrequenciaModel.turma == turma)
+    rows = (await db.execute(stmt)).all()
+
+    output_csv = io.StringIO()
+    writer = csv.writer(output_csv)
+    writer.writerow(["Data", "Turno", "Turma", "Aluno", "Status Aluno", "Frequência", "Atestado"])
+    for freq, u in rows:
+        writer.writerow(
+            [
+                freq.data.isoformat(),
+                freq.turno,
+                freq.turma,
+                u.nome,
+                u.status.value if u.status else "",
+                freq.status,
+                "Sim" if freq.atestado_documento else "Nao",
+            ]
+        )
+    output_csv.seek(0)
+    return StreamingResponse(
+        iter([output_csv.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=frequencia.csv"},
     )
 
 
@@ -207,137 +449,131 @@ async def export_checkins(
     result = await db.execute(query)
     rows = result.all()
 
+    # ── Dados compartilhados entre as exportações CSV e Excel ───────────────────
+    from app.adapters.persistence.orm_models import CertificateDay as _CDay
+    from app.adapters.persistence.orm_models import MedicalCertificate as _MCert
+    from app.domain.models import _DIA_SEMANA_MAP, TURNOS_ALUNOS
+
+    # Organiza check-ins por usuário
+    checkins_by_user: dict[Any, Any] = {}
+    for checkin, user in rows:
+        checkins_by_user.setdefault(user.id, []).append(checkin)
+
+    # Busca todos os usuários para calcular faltas mesmo de quem não bateu ponto
+    all_users = (await db.execute(select(UserModel))).scalars().all()
+
+    # Cobertura de atestados ativos: user_id -> {turno_referencia: certificate_id}
+    cover_rows = (
+        await db.execute(
+            select(_CDay.user_id, _CDay.turno_referencia, _CDay.certificate_id)
+            .join(_MCert, _MCert.id == _CDay.certificate_id)
+            .where(_CDay.ativo == True, _MCert.status == CertificateStatus.ACTIVE)  # noqa: E712
+        )
+    ).all()
+    cert_cover: dict[Any, dict[str, Any]] = {}
+    for uid, ref, cid in cover_rows:
+        cert_cover.setdefault(uid, {})[ref] = cid
+
+    num_days = calendar.monthrange(target_year, target_month)[1]
+    br = timezone(timedelta(hours=-3))
+
+    def _fmt(dt: datetime | None) -> str:
+        return dt.replace(tzinfo=UTC).astimezone(br).strftime("%Y-%m-%d %H:%M:%S") if dt else ""
+
+    def _status_para(found_checkin: Any, user_id: Any, expected_ref: str) -> str:
+        # Presença/atraso reais prevalecem; depois atestado; senão FALTA.
+        if found_checkin is not None and found_checkin.status in (
+            StatusCheckin.PRESENTE,
+            StatusCheckin.ATRASADO,
+        ):
+            return str(found_checkin.status.value)
+        cid = cert_cover.get(user_id, {}).get(expected_ref)
+        if cid is not None:
+            return f"JUSTIFICADO (Atestado {str(cid)[:8]})"
+        if found_checkin is not None and found_checkin.status:
+            return str(found_checkin.status.value)
+        return "FALTA"
+
+    # Linhas de alunos (8 colunas) e de staff (7 colunas), calculadas uma única vez.
+    aluno_rows: list[list[str]] = []
+    staff_rows: list[list[str]] = []
+    for user in all_users:
+        if tipo and user.tipo != tipo:
+            continue
+        user_checkins = checkins_by_user.get(user.id, [])
+
+        if user.tipo == TipoUsuario.STAFF:
+            for checkin in user_checkins:
+                if (
+                    checkin.hora_checkin
+                    and checkin.hora_checkin.year == target_year
+                    and checkin.hora_checkin.month == target_month
+                ):
+                    staff_rows.append(
+                        [
+                            user.nome,
+                            user.email,
+                            user.patrimonio or "",
+                            _fmt(checkin.hora_checkin),
+                            checkin.turno_referencia or "",
+                            checkin.status.value if checkin.status else "",
+                            checkin.ip_publico or "",
+                        ]
+                    )
+            continue
+
+        # ALUNO: enumera turnos esperados e classifica (PRESENTE/ATRASADO/JUSTIFICADO/FALTA)
+        if not user.turma_ou_equipe:
+            continue
+        turma_shifts = [t for t in TURNOS_ALUNOS if t.turma == user.turma_ou_equipe]
+        if not turma_shifts:
+            continue
+        for day in range(1, num_days + 1):
+            try:
+                current_date = datetime(target_year, target_month, day)
+            except ValueError:
+                continue
+            if current_date.date() > now_utc.date():
+                continue
+            weekday = current_date.weekday()
+            if weekday not in _DIA_SEMANA_MAP:
+                continue
+            dia_enum = _DIA_SEMANA_MAP[weekday]
+            for shift in [t for t in turma_shifts if t.dia == dia_enum]:
+                expected_ref = f"{current_date.strftime('%Y-%m-%d')}_{shift.turno.value}"
+                found = next((c for c in user_checkins if c.turno_referencia == expected_ref), None)
+                data_hora = _fmt(found.hora_checkin) if found else current_date.strftime("%Y-%m-%d")
+                aluno_rows.append(
+                    [
+                        user.nome,
+                        user.email,
+                        user.turma_ou_equipe,
+                        user.patrimonio or "",
+                        data_hora,
+                        expected_ref,
+                        _status_para(found, user.id, expected_ref),
+                        (found.ip_publico or "") if found else "",
+                    ]
+                )
+
+    aluno_header = ["Nome", "Email", "Turma", "Máquina", "Data/Hora", "Turno", "Status", "IP"]
+    staff_header = ["Nome", "Email", "Máquina", "Data/Hora", "Turno", "Status", "IP"]
+
     if format == "excel":
         wb = openpyxl.Workbook()
         ws_staff = wb.active
         ws_staff.title = "Staff"
         ws_alunos = wb.create_sheet("Alunos")
-
-        ws_staff.append(["Nome", "Email", "Máquina", "Data/Hora", "Turno", "Status", "IP"])
-        ws_alunos.append(
-            ["Nome", "Email", "Turma", "Máquina", "Data/Hora", "Turno", "Status", "IP"]
-        )
-
-        # Organize checkins by user and day/turno
-        checkins_by_user: dict[Any, Any] = {}
-        for checkin, user in rows:
-            if user.id not in checkins_by_user:
-                checkins_by_user[user.id] = []
-            checkins_by_user[user.id].append(checkin)
-
-        # Fetch all users to calculate faltas even for those who didn't check in at all
-        users_result = await db.execute(select(UserModel))
-        all_users = users_result.scalars().all()
-
-        from app.domain.models import _DIA_SEMANA_MAP, TURNOS_ALUNOS
-
-        # Determine valid days in the target month up to today
-        num_days = calendar.monthrange(target_year, target_month)[1]
-
-        for user in all_users:
-            if tipo and user.tipo != tipo:
-                continue
-
-            user_checkins = checkins_by_user.get(user.id, [])
-
-            if user.tipo == TipoUsuario.STAFF:
-                # Just dump raw checkins for Staff
-                for checkin in user_checkins:
-                    # Filter by month/year (approx)
-                    if (
-                        checkin.hora_checkin.year == target_year
-                        and checkin.hora_checkin.month == target_month
-                    ):
-                        ws_staff.append(
-                            [
-                                user.nome,
-                                user.email,
-                                user.patrimonio or "",
-                                checkin.hora_checkin.replace(tzinfo=UTC)
-                                .astimezone(timezone(timedelta(hours=-3)))
-                                .strftime("%Y-%m-%d %H:%M:%S")
-                                if checkin.hora_checkin
-                                else "",
-                                checkin.turno_referencia or "",
-                                checkin.status.value if checkin.status else "",
-                                checkin.ip_publico or "",
-                            ]
-                        )
-            else:
-                # ALUNO: Calculate Faltas
-                if not user.turma_ou_equipe:
-                    continue
-
-                # Find the shifts for this turma
-                turma_shifts = [t for t in TURNOS_ALUNOS if t.turma == user.turma_ou_equipe]
-                if not turma_shifts:
-                    continue
-
-                # Check each day of the month
-                for day in range(1, num_days + 1):
-                    try:
-                        current_date = datetime(target_year, target_month, day)
-                    except ValueError:
-                        continue
-
-                    # Don't calculate faltas for future days
-                    if current_date.date() > now_utc.date():
-                        continue
-
-                    weekday = current_date.weekday()
-                    if weekday not in _DIA_SEMANA_MAP:
-                        continue
-
-                    dia_enum = _DIA_SEMANA_MAP[weekday]
-
-                    # Expected shifts for this day
-                    expected_shifts = [t for t in turma_shifts if t.dia == dia_enum]
-
-                    for shift in expected_shifts:
-                        # Find if user has checkin for this shift
-                        # turno_referencia is usually "{YYYY-MM-DD}_{MANHA/TARDE}"
-                        expected_ref = f"{current_date.strftime('%Y-%m-%d')}_{shift.turno.value}"
-
-                        found_checkin = next(
-                            (c for c in user_checkins if c.turno_referencia == expected_ref), None
-                        )
-
-                        if found_checkin:
-                            ws_alunos.append(
-                                [
-                                    user.nome,
-                                    user.email,
-                                    user.turma_ou_equipe,
-                                    user.patrimonio or "",
-                                    found_checkin.hora_checkin.replace(tzinfo=UTC)
-                                    .astimezone(timezone(timedelta(hours=-3)))
-                                    .strftime("%Y-%m-%d %H:%M:%S")
-                                    if found_checkin.hora_checkin
-                                    else "",
-                                    expected_ref,
-                                    found_checkin.status.value if found_checkin.status else "",
-                                    found_checkin.ip_publico or "",
-                                ]
-                            )
-                        else:
-                            # Falta!
-                            ws_alunos.append(
-                                [
-                                    user.nome,
-                                    user.email,
-                                    user.turma_ou_equipe,
-                                    user.patrimonio or "",
-                                    current_date.strftime("%Y-%m-%d"),
-                                    expected_ref,
-                                    "FALTA",
-                                    "",
-                                ]
-                            )
+        ws_staff.append(staff_header)
+        ws_alunos.append(aluno_header)
+        for row in staff_rows:
+            ws_staff.append(row)
+        for row in aluno_rows:
+            ws_alunos.append(row)
 
         output_excel = io.BytesIO()
         wb.save(output_excel)
         output_excel.seek(0)
-
         return StreamingResponse(
             output_excel,
             media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -346,28 +582,15 @@ async def export_checkins(
             },
         )
     else:
-        # Default CSV
+        # CSV: mesma lógica de turnos esperados dos alunos; staff rotulado na coluna Turma.
         output_csv = io.StringIO()
         writer = csv.writer(output_csv)
-        writer.writerow(["Nome", "Email", "Turma", "Máquina", "Data/Hora", "Turno", "Status", "IP"])
-
-        for checkin, user in rows:
-            writer.writerow(
-                [
-                    user.nome,
-                    user.email,
-                    user.turma_ou_equipe or "",
-                    user.patrimonio or "",
-                    checkin.hora_checkin.replace(tzinfo=UTC)
-                    .astimezone(timezone(timedelta(hours=-3)))
-                    .strftime("%Y-%m-%d %H:%M:%S")
-                    if checkin.hora_checkin
-                    else "",
-                    checkin.turno_referencia or "",
-                    checkin.status.value if checkin.status else "",
-                    checkin.ip_publico or "",
-                ]
-            )
+        writer.writerow(aluno_header)
+        for row in aluno_rows:
+            writer.writerow(row)
+        for sr in staff_rows:
+            # Mapeia staff (7 col) para o layout de 8 colunas, com Turma="(Staff)"
+            writer.writerow([sr[0], sr[1], "(Staff)", sr[2], sr[3], sr[4], sr[5], sr[6]])
 
         output_csv.seek(0)
         return StreamingResponse(

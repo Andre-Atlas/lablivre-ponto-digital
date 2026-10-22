@@ -28,3 +28,11 @@ Thumbs.db
 # Flet
 desktop_app/dist/
 desktop_app/build/
+
+# Local test/run sqlite databases (not the tracked dev db)
+backend/test_lo_eval.db
+backend/run_lo.db
+
+# Demo/local artifacts (não versionar)
+backend/demo.db
+backend/.venv-demo/
