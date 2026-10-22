@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Save, ClipboardList } from 'lucide-react';
 import type { LearningOutcome } from '../../services/api';
-import { getPrefill, getProgramConfig, listLearningOutcomes, submitEvaluation } from '../../services/api';
+import { getFrequenciaTurmas, getPrefill, getProgramConfig, listLearningOutcomes, submitEvaluation } from '../../services/api';
 import { useAlunos } from '../../hooks/useAlunos';
 import { PageHeader, Card, Select, Textarea, Button, Alert, EmptyState } from '../../components/ui';
 
@@ -12,6 +12,8 @@ const NIVEL_LABEL: Record<number, string> = {
 
 export function AvaliarPage() {
   const { alunos } = useAlunos();
+  const [turmas, setTurmas] = useState<string[]>([]);
+  const [turma, setTurma] = useState<string>('');
   const [los, setLos] = useState<LearningOutcome[]>([]);
   const [numSemanas, setNumSemanas] = useState(12);
   const [selected, setSelected] = useState<string>('');
@@ -26,20 +28,35 @@ export function AvaliarPage() {
   useEffect(() => {
     (async () => {
       try {
-        const [cfg, loList] = await Promise.all([getProgramConfig(), listLearningOutcomes()]);
+        const [cfg, loList, turmaList] = await Promise.all([
+          getProgramConfig(),
+          listLearningOutcomes(),
+          getFrequenciaTurmas(),
+        ]);
         setNumSemanas(cfg.num_semanas);
         setSemana(cfg.semana_atual ?? 1);
         setLos(loList);
+        setTurmas(turmaList);
       } catch (e: any) {
         setError(e.message || 'Não foi possível carregar');
       }
     })();
   }, []);
 
-  // Default the student once the list loads.
+  // Students of the selected turma only (no turma → no students).
+  const alunosDaTurma = turma ? alunos.filter((a) => a.turma === turma) : [];
+
+  // Reset the selected student whenever the turma changes, then default to the first.
   useEffect(() => {
-    if (!selected && alunos[0]) setSelected(String(alunos[0].id));
-  }, [alunos, selected]);
+    if (!turma) {
+      setSelected('');
+      return;
+    }
+    const naTurma = alunos.filter((a) => a.turma === turma);
+    if (!naTurma.some((a) => String(a.id) === selected)) {
+      setSelected(naTurma[0] ? String(naTurma[0].id) : '');
+    }
+  }, [turma, alunos, selected]);
 
   useEffect(() => {
     if (!selected) return;
@@ -80,10 +97,19 @@ export function AvaliarPage() {
       />
 
       <Card className="mt-8">
-        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Select label="Aluno" value={selected} onChange={(e) => setSelected(e.target.value)}>
-            {alunos.length === 0 && <option value="">Nenhum aluno</option>}
-            {alunos.map((a) => <option key={String(a.id)} value={String(a.id)}>{a.nome}</option>)}
+        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <Select label="Turma" value={turma} onChange={(e) => setTurma(e.target.value)}>
+            <option value="">Selecione uma turma…</option>
+            {turmas.map((t) => <option key={t} value={t}>{t}</option>)}
+          </Select>
+          <Select label="Aluno" value={selected} onChange={(e) => setSelected(e.target.value)} disabled={!turma}>
+            {!turma ? (
+              <option value="">Selecione uma turma primeiro</option>
+            ) : alunosDaTurma.length === 0 ? (
+              <option value="">Nenhum aluno nesta turma</option>
+            ) : (
+              alunosDaTurma.map((a) => <option key={String(a.id)} value={String(a.id)}>{a.nome}</option>)
+            )}
           </Select>
           <Select label="Semana" value={semana} onChange={(e) => setSemana(Number(e.target.value))}>
             {Array.from({ length: numSemanas }, (_, i) => i + 1).map((w) => <option key={w} value={w}>Semana {w}</option>)}

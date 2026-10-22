@@ -8,6 +8,7 @@ export interface User {
   role?: string;
   admin_aprovado: boolean;
   status?: string; // ATIVO | DESLIGADO (alunos)
+  turma_ou_equipe?: string;
 }
 
 export const setAlunoStatus = async (userId: string | number, status: string): Promise<void> => {
